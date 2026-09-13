@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - Cheque Pool Health Care</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f7f9;
+    color:#222;
+}
+
+.header{
+    background:#087f5b;
+    color:white;
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.header h2{
+    margin:0;
+    font-size:20px;
+}
+
+.logout{
+    background:white;
+    color:#087f5b;
+    border:0;
+    padding:9px 14px;
+    border-radius:8px;
+    font-weight:bold;
+}
+
+.container{
+    padding:18px;
+    max-width:1100px;
+    margin:auto;
+}
+
+.welcome{
+    margin-bottom:20px;
+}
+
+.welcome h1{
+    margin-bottom:5px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 8px #0001;
+}
+
+.card h3{
+    margin:0;
+    color:#666;
+    font-size:14px;
+}
+
+.number{
+    font-size:30px;
+    font-weight:bold;
+    margin-top:10px;
+    color:#087f5b;
+}
+
+.menu{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+    margin-top:25px;
+}
+
+.menu button{
+    border:0;
+    background:white;
+    padding:22px 10px;
+    border-radius:12px;
+    box-shadow:0 2px 8px #0001;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.menu button:hover{
+    background:#e9f8f3;
+}
+
+.section{
+    background:white;
+    margin-top:25px;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 8px #0001;
+}
+
+.section h2{
+    margin-top:0;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #ddd;
+    text-align:left;
+}
+
+.status{
+    background:#fff3cd;
+    padding:5px 9px;
+    border-radius:6px;
+    font-size:12px;
+}
+
+@media(max-width:700px){
+    .cards{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .menu{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .header h2{
+        font-size:16px;
+    }
+
+    table{
+        font-size:13px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+    <h2>CHEQUE POOL HEALTH CARE</h2>
+    <button class="logout" onclick="logout()">Logout</button>
+</header>
+
+<main class="container">
+
+    <div class="welcome">
+        <h1>Admin Dashboard</h1>
+        <p>Manage your medical shop from here.</p>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total Orders</h3>
+            <div class="number" id="orders">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Total Medicines</h3>
+            <div class="number" id="medicines">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Customers</h3>
+            <div class="number" id="customers">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Prescriptions</h3>
+            <div class="number" id="prescriptions">0</div>
+        </div>
+
+    </div>
+
+    <div class="menu">
+
+        <button onclick="showMessage('Orders')">
+            📦<br>Orders
+        </button>
+
+        <button onclick="showMessage('Medicines')">
+            💊<br>Medicines
+        </button>
+
+        <button onclick="showMessage('Customers')">
+            👥<br>Customers
+        </button>
+
+        <button onclick="showMessage('Prescriptions')">
+            📋<br>Prescriptions
+        </button>
+
+        <button onclick="showMessage('Delivery')">
+            🚚<br>Delivery
+        </button>
+
+        <button onclick="showMessage('Settings')">
+            ⚙️<br>Settings
+        </button>
+
+    </div>
+
+    <div class="section">
+
+        <h2>Recent Orders</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>#1001</td>
+                    <td>Demo Customer</td>
+                    <td>₹0</td>
+                    <td><span class="status">Pending</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</main>
+
+<script>
+
+function showMessage(name){
+    alert(name + " section will be connected next.");
+}
+
+function logout(){
+    alert("Admin logout will be connected with secure login.");
+}
+
+</script>
+
+</body>
+</html>
