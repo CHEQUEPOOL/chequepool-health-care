@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Medicines - Cheque Pool Health Care</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f4f7f9;
+  color:#222;
+}
+
+.header{
+  background:#087f5b;
+  color:white;
+  padding:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.header h2{
+  margin:0;
+  font-size:20px;
+}
+
+.back{
+  background:white;
+  color:#087f5b;
+  border:0;
+  padding:9px 14px;
+  border-radius:8px;
+  font-weight:bold;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:18px;
+}
+
+h1{
+  margin-bottom:5px;
+}
+
+.subtitle{
+  color:#666;
+  margin-top:0;
+}
+
+.form{
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 2px 8px #0001;
+  margin-top:20px;
+}
+
+.form h2{
+  margin-top:0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:15px;
+}
+
+input,select{
+  width:100%;
+  padding:12px;
+  border:1px solid #ccc;
+  border-radius:8px;
+  font-size:15px;
+}
+
+label{
+  font-weight:bold;
+  display:block;
+  margin-bottom:6px;
+}
+
+.full{
+  grid-column:1/-1;
+}
+
+.add{
+  margin-top:15px;
+  background:#087f5b;
+  color:white;
+  border:0;
+  padding:12px 20px;
+  border-radius:8px;
+  font-weight:bold;
+  font-size:16px;
+}
+
+.search{
+  margin-top:25px;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 2px 8px #0001;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th,td{
+  padding:12px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
+}
+
+th{
+  background:#087f5b;
+  color:white;
+}
+
+.delete{
+  background:#d32f2f;
+  color:white;
+  border:0;
+  padding:7px 10px;
+  border-radius:6px;
+}
+
+.empty{
+  text-align:center;
+  padding:25px;
+  color:#777;
+}
+
+@media(max-width:700px){
+  .grid{
+    grid-template-columns:1fr;
+  }
+
+  table{
+    font-size:13px;
+  }
+
+  th,td{
+    padding:8px;
+  }
+
+  .header h2{
+    font-size:16px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <h2>💊 CHEQUE POOL HEALTH CARE</h2>
+
+  <button class="back" onclick="location.href='admin.html'">
+    ← Admin
+  </button>
+</header>
+
+<main class="container">
+
+  <h1>💊 Medicines</h1>
+  <p class="subtitle">Manage your medical shop medicines.</p>
+
+  <section class="form">
+
+    <h2>Add Medicine</h2>
+
+    <div class="grid">
+
+      <div>
+        <label>Medicine Name</label>
+        <input id="name" type="text" placeholder="e.g. Paracetamol 500mg">
+      </div>
+
+      <div>
+        <label>Company</label>
+        <input id="company" type="text" placeholder="e.g. Cipla">
+      </div>
+
+      <div>
+        <label>Category</label>
+        <select id="category">
+          <option value="">Select category</option>
+          <option>Tablet</option>
+          <option>Capsule</option>
+          <option>Syrup</option>
+          <option>Injection</option>
+          <option>Cream</option>
+          <option>Drops</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Price (₹)</label>
+        <input id="price" type="number" min="0" placeholder="0">
+      </div>
+
+      <div>
+        <label>Stock</label>
+        <input id="stock" type="number" min="0" placeholder="0">
+      </div>
+
+      <div>
+        <label>Expiry Date</label>
+        <input id="expiry" type="date">
+      </div>
+
+      <div class="full">
+        <label>Medicine Description</label>
+        <input id="description" type="text"
+               placeholder="Short description">
+      </div>
+
+    </div>
+
+    <button class="add" onclick="addMedicine()">
+      ➕ Add Medicine
+    </button>
+
+  </section>
+
+  <section class="search">
+
+    <h2>🔍 Medicine List</h2>
+
+    <input
+      id="search"
+      type="text"
+      placeholder="Search medicine..."
+      oninput="displayMedicines()"
+    >
+
+    <div style="overflow-x:auto;">
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Company</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Expiry</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody id="medicineList"></tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+
+let medicines =
+  JSON.parse(localStorage.getItem("medicines")) || [];
+
+function addMedicine(){
+
+  const name =
+    document.getElementById("name").value.trim();
+
+  const company =
+    document.getElementById("company").value.trim();
+
+  const category =
+    document.getElementById("category").value;
+
+  const price =
+    document.getElementById("price").value;
+
+  const stock =
+    document.getElementById("stock").value;
+
+  const expiry =
+    document.getElementById("expiry").value;
+
+  const description =
+    document.getElementById("description").value.trim();
+
+  if(!name){
+    alert("Please enter medicine name.");
+    return;
+  }
+
+  if(price === ""){
+    alert("Please enter price.");
+    return;
+  }
+
+  if(stock === ""){
+    alert("Please enter stock.");
+    return;
+  }
+
+  const medicine = {
+    id:Date.now(),
+    name:name,
+    company:company,
+    category:category,
+    price:Number(price),
+    stock:Number(stock),
+    expiry:expiry,
+    description:description
+  };
+
+  medicines.push(medicine);
+
+  localStorage.setItem(
+    "medicines",
+    JSON.stringify(medicines)
+  );
+
+  alert("Medicine added successfully.");
+
+  clearForm();
+  displayMedicines();
+}
+
+function clearForm(){
+
+  document.getElementById("name").value="";
+  document.getElementById("company").value="";
+  document.getElementById("category").value="";
+  document.getElementById("price").value="";
+  document.getElementById("stock").value="";
+  document.getElementById("expiry").value="";
+  document.getElementById("description").value="";
+}
+
+function deleteMedicine(id){
+
+  if(!confirm("Delete this medicine?")){
+    return;
+  }
+
+  medicines =
+    medicines.filter(function(medicine){
+      return medicine.id !== id;
+    });
+
+  localStorage.setItem(
+    "medicines",
+    JSON.stringify(medicines)
+  );
+
+  displayMedicines();
+}
+
+function displayMedicines(){
+
+  const list =
+    document.getElementById("medicineList");
+
+  const search =
+    document.getElementById("search")
+    .value
+    .toLowerCase()
+    .trim();
+
+  const filtered =
+    medicines.filter(function(medicine){
+
+      return (
+        medicine.name.toLowerCase().includes(search) ||
+        medicine.company.toLowerCase().includes(search)
+      );
+
+    });
+
+  list.innerHTML="";
+
+  if(filtered.length === 0){
+
+    list.innerHTML =
+      '<tr><td colspan="7" class="empty">No medicines found.</td></tr>';
+
+    return;
+  }
+
+  filtered.forEach(function(medicine){
+
+    const row =
+      document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${escapeHtml(medicine.name)}</td>
+      <td>${escapeHtml(medicine.company)}</td>
+      <td>${escapeHtml(medicine.category)}</td>
+      <td>₹${medicine.price}</td>
+      <td>${medicine.stock}</td>
+      <td>${medicine.expiry || "-"}</td>
+      <td>
+        <button class="delete"
+          onclick="deleteMedicine(${medicine.id})">
+          Delete
+        </button>
+      </td>
+    `;
+
+    list.appendChild(row);
+  });
+}
+
+function escapeHtml(text){
+
+  return String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+displayMedicines();
+
+</script>
+
+</body>
+  </html>
