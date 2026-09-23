@@ -137,7 +137,15 @@ th{
   padding:7px 10px;
   border-radius:6px;
 }
-
+  
+.edit{
+  background:#087f5b;
+  color:white;
+  border:0;
+  padding:7px 10px;
+  border-radius:6px;
+  margin-right:5px;
+  }
 .empty{
   text-align:center;
   padding:25px;
@@ -252,8 +260,8 @@ th{
 
     </div>
 
-    <button class="add" onclick="addMedicine()">
-      ➕ Add Medicine
+    <button id="medicineButton" class="add" onclick="addMedicine()">
+  ➕ Add Medicine
     </button>
 
   </section>
@@ -317,7 +325,7 @@ const supabaseClient =
 
 
 let medicines = [];
-
+let editingId = null;
 
 /* LOAD MEDICINES */
 
@@ -350,6 +358,11 @@ async function loadMedicines(){
 /* ADD MEDICINE */
 
 async function addMedicine(){
+
+  if(editingId !== null){
+    await updateMedicine();
+    return;
+  }
 
   const name =
     document.getElementById("name").value.trim();
@@ -523,7 +536,179 @@ async function deleteMedicine(id){
 
   loadMedicines();
 }
+/* EDIT MEDICINE */
 
+function editMedicine(id){
+
+  const medicine =
+    medicines.find(function(item){
+      return item.id === id;
+    });
+
+  if(!medicine){
+    alert("Medicine not found.");
+    return;
+  }
+
+  editingId = id;
+
+  document.getElementById("name").value =
+    medicine.name || "";
+
+  document.getElementById("brand").value =
+    medicine.brand || "";
+
+  document.getElementById("strength").value =
+    medicine.strength || "";
+
+  document.getElementById("category").value =
+    medicine.category || "";
+
+  document.getElementById("mrp").value =
+    medicine.mrp ?? "";
+
+  document.getElementById("sale_price").value =
+    medicine.sale_price ?? "";
+
+  document.getElementById("stock").value =
+    medicine.stock ?? "";
+
+  document.getElementById("expiry_date").value =
+    medicine.expiry_date || "";
+
+  document.getElementById("require_prescription").value =
+    medicine.require_prescription ? "true" : "false";
+
+  document.getElementById("active").value =
+    medicine.active ? "true" : "false";
+
+
+  document.getElementById("medicineButton").innerHTML =
+    "✏️ Update Medicine";
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+
+/* UPDATE MEDICINE */
+
+async function updateMedicine(){
+
+  const name =
+    document.getElementById("name").value.trim();
+
+  const brand =
+    document.getElementById("brand").value.trim();
+
+  const strength =
+    document.getElementById("strength").value.trim();
+
+  const category =
+    document.getElementById("category").value;
+
+  const mrp =
+    document.getElementById("mrp").value;
+
+  const sale_price =
+    document.getElementById("sale_price").value;
+
+  const stock =
+    document.getElementById("stock").value;
+
+  const expiry_date =
+    document.getElementById("expiry_date").value;
+
+  const require_prescription =
+    document.getElementById("require_prescription").value === "true";
+
+  const active =
+    document.getElementById("active").value === "true";
+
+
+  if(!name){
+
+    alert("Please enter medicine name.");
+    return;
+  }
+
+  if(mrp === ""){
+
+    alert("Please enter MRP.");
+    return;
+  }
+
+  if(sale_price === ""){
+
+    alert("Please enter sale price.");
+    return;
+  }
+
+  if(stock === ""){
+
+    alert("Please enter stock.");
+    return;
+  }
+
+
+  const { error } =
+    await supabaseClient
+      .from("medicines")
+      .update({
+
+        name:name,
+
+        brand:brand,
+
+        strength:strength,
+
+        category:category,
+
+        mrp:Number(mrp),
+
+        sale_price:Number(sale_price),
+
+        stock:Number(stock),
+
+        require_prescription:
+          require_prescription,
+
+        expiry_date:
+          expiry_date || null,
+
+        active:
+          active
+
+      })
+      .eq("id", editingId);
+
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Medicine update nahi hui.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  alert("Medicine updated successfully.");
+
+  editingId = null;
+
+  clearForm();
+
+  document.getElementById("medicineButton").innerHTML =
+    "➕ Add Medicine";
+
+  loadMedicines();
+  }
 
 /* DISPLAY MEDICINES */
 
@@ -611,17 +796,25 @@ function displayMedicines(){
 
       <td>${medicine.expiry_date || "-"}</td>
 
-      <td>
+    <td>
 
-        <button
-          class="delete"
-          onclick="deleteMedicine('${medicine.id}')">
+  <button
+    class="edit"
+    onclick="editMedicine('${medicine.id}')">
 
-          Delete
+    Edit
 
-        </button>
+  </button>
 
-      </td>
+  <button
+    class="delete"
+    onclick="deleteMedicine('${medicine.id}')">
+
+    Delete
+
+  </button>
+
+</td>
 
     `;
 
