@@ -628,11 +628,19 @@ async function updateMedicine(){
     document.getElementById("active").value === "true";
 
 
+  if(!editingId){
+
+    alert("No medicine selected for update.");
+    return;
+  }
+
+
   if(!name){
 
     alert("Please enter medicine name.");
     return;
   }
+
 
   if(mrp === ""){
 
@@ -640,11 +648,13 @@ async function updateMedicine(){
     return;
   }
 
+
   if(sale_price === ""){
 
     alert("Please enter sale price.");
     return;
   }
+
 
   if(stock === ""){
 
@@ -653,24 +663,22 @@ async function updateMedicine(){
   }
 
 
-  const { error } =
+  console.log("Updating medicine ID:", editingId);
+
+
+  const { data, error } =
     await supabaseClient
       .from("medicines")
       .update({
 
-        name:name,
+        name: name,
+        brand: brand,
+        strength: strength,
+        category: category,
 
-        brand:brand,
-
-        strength:strength,
-
-        category:category,
-
-        mrp:Number(mrp),
-
-        sale_price:Number(sale_price),
-
-        stock:Number(stock),
+        mrp: Number(mrp),
+        sale_price: Number(sale_price),
+        stock: Number(stock),
 
         require_prescription:
           require_prescription,
@@ -682,7 +690,12 @@ async function updateMedicine(){
           active
 
       })
-      .eq("id", editingId);
+      .eq("id", editingId)
+      .select();
+
+
+  console.log("Update result:", data);
+  console.log("Update error:", error);
 
 
   if(error){
@@ -698,17 +711,33 @@ async function updateMedicine(){
   }
 
 
+  if(!data || data.length === 0){
+
+    alert(
+      "Update nahi hua.\n\n" +
+      "Medicine ID match nahi hui ya database permission issue hai."
+    );
+
+    return;
+  }
+
+
   alert("Medicine updated successfully.");
+
 
   editingId = null;
 
+
   clearForm();
+
 
   document.getElementById("medicineButton").innerHTML =
     "➕ Add Medicine";
 
+
   loadMedicines();
-  }
+
+        }
 
 /* DISPLAY MEDICINES */
 
