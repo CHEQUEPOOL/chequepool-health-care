@@ -6,6 +6,8 @@
 
 <title>Medicines - Cheque Pool Health Care</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{
   box-sizing:border-box;
@@ -185,12 +187,17 @@ th{
 
       <div>
         <label>Medicine Name</label>
-        <input id="name" type="text" placeholder="e.g. Paracetamol 500mg">
+        <input id="name" type="text" placeholder="e.g. Paracetamol">
       </div>
 
       <div>
-        <label>Company</label>
-        <input id="company" type="text" placeholder="e.g. Cipla">
+        <label>Brand / Company</label>
+        <input id="brand" type="text" placeholder="e.g. Cipla">
+      </div>
+
+      <div>
+        <label>Strength</label>
+        <input id="strength" type="text" placeholder="e.g. 500mg">
       </div>
 
       <div>
@@ -208,8 +215,13 @@ th{
       </div>
 
       <div>
-        <label>Price (₹)</label>
-        <input id="price" type="number" min="0" placeholder="0">
+        <label>MRP (₹)</label>
+        <input id="mrp" type="number" min="0" step="0.01" placeholder="0">
+      </div>
+
+      <div>
+        <label>Sale Price (₹)</label>
+        <input id="sale_price" type="number" min="0" step="0.01" placeholder="0">
       </div>
 
       <div>
@@ -219,13 +231,23 @@ th{
 
       <div>
         <label>Expiry Date</label>
-        <input id="expiry" type="date">
+        <input id="expiry_date" type="date">
       </div>
 
-      <div class="full">
-        <label>Medicine Description</label>
-        <input id="description" type="text"
-               placeholder="Short description">
+      <div>
+        <label>Prescription Required</label>
+        <select id="require_prescription">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Active</label>
+        <select id="active">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
       </div>
 
     </div>
@@ -254,9 +276,11 @@ th{
         <thead>
           <tr>
             <th>Name</th>
-            <th>Company</th>
+            <th>Brand</th>
+            <th>Strength</th>
             <th>Category</th>
-            <th>Price</th>
+            <th>MRP</th>
+            <th>Sale Price</th>
             <th>Stock</th>
             <th>Expiry</th>
             <th>Action</th>
@@ -275,100 +299,233 @@ th{
 
 <script>
 
-let medicines =
-  JSON.parse(localStorage.getItem("medicines")) || [];
+const SUPABASE_URL =
+  "https://ymhaxeferrpyhuavzcgu.supabase.co";
 
-function addMedicine(){
+/*
+  यहाँ अपना वही Supabase Publishable Key डालें
+  जो हमने पहले इस्तेमाल किया था.
+*/
+const SUPABASE_KEY =
+  "sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+let medicines = [];
+
+
+/* LOAD MEDICINES */
+
+async function loadMedicines(){
+
+  const { data, error } =
+    await supabaseClient
+      .from("medicines")
+      .select("*")
+      .order("name", { ascending:true });
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Medicines load nahi ho paayi.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  medicines = data || [];
+
+  displayMedicines();
+}
+
+
+/* ADD MEDICINE */
+
+async function addMedicine(){
 
   const name =
     document.getElementById("name").value.trim();
 
-  const company =
-    document.getElementById("company").value.trim();
+  const brand =
+    document.getElementById("brand").value.trim();
+
+  const strength =
+    document.getElementById("strength").value.trim();
 
   const category =
     document.getElementById("category").value;
 
-  const price =
-    document.getElementById("price").value;
+  const mrp =
+    document.getElementById("mrp").value;
+
+  const sale_price =
+    document.getElementById("sale_price").value;
 
   const stock =
     document.getElementById("stock").value;
 
-  const expiry =
-    document.getElementById("expiry").value;
+  const expiry_date =
+    document.getElementById("expiry_date").value;
 
-  const description =
-    document.getElementById("description").value.trim();
+  const require_prescription =
+    document.getElementById("require_prescription").value === "true";
+
+  const active =
+    document.getElementById("active").value === "true";
+
 
   if(!name){
+
     alert("Please enter medicine name.");
     return;
   }
 
-  if(price === ""){
-    alert("Please enter price.");
+  if(mrp === ""){
+
+    alert("Please enter MRP.");
+    return;
+  }
+
+  if(sale_price === ""){
+
+    alert("Please enter sale price.");
     return;
   }
 
   if(stock === ""){
+
     alert("Please enter stock.");
     return;
   }
 
+
   const medicine = {
-    id:Date.now(),
-    name:name,
-    company:company,
-    category:category,
-    price:Number(price),
-    stock:Number(stock),
-    expiry:expiry,
-    description:description
+
+    id: crypto.randomUUID(),
+
+    name: name,
+
+    brand: brand,
+
+    strength: strength,
+
+    category: category,
+
+    mrp: Number(mrp),
+
+    sale_price: Number(sale_price),
+
+    stock: Number(stock),
+
+    require_prescription:
+      require_prescription,
+
+    expiry_date:
+      expiry_date || null,
+
+    active:
+      active
   };
 
-  medicines.push(medicine);
 
-  localStorage.setItem(
-    "medicines",
-    JSON.stringify(medicines)
-  );
+  const { error } =
+    await supabaseClient
+      .from("medicines")
+      .insert([medicine]);
+
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Medicine add nahi hui.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
 
   alert("Medicine added successfully.");
 
   clearForm();
-  displayMedicines();
+
+  loadMedicines();
 }
+
+
+/* CLEAR FORM */
 
 function clearForm(){
 
-  document.getElementById("name").value="";
-  document.getElementById("company").value="";
-  document.getElementById("category").value="";
-  document.getElementById("price").value="";
-  document.getElementById("stock").value="";
-  document.getElementById("expiry").value="";
-  document.getElementById("description").value="";
+  document.getElementById("name").value = "";
+
+  document.getElementById("brand").value = "";
+
+  document.getElementById("strength").value = "";
+
+  document.getElementById("category").value = "";
+
+  document.getElementById("mrp").value = "";
+
+  document.getElementById("sale_price").value = "";
+
+  document.getElementById("stock").value = "";
+
+  document.getElementById("expiry_date").value = "";
+
+  document.getElementById("require_prescription").value =
+    "false";
+
+  document.getElementById("active").value =
+    "true";
 }
 
-function deleteMedicine(id){
+
+/* DELETE MEDICINE */
+
+async function deleteMedicine(id){
 
   if(!confirm("Delete this medicine?")){
+
     return;
   }
 
-  medicines =
-    medicines.filter(function(medicine){
-      return medicine.id !== id;
-    });
 
-  localStorage.setItem(
-    "medicines",
-    JSON.stringify(medicines)
-  );
+  const { error } =
+    await supabaseClient
+      .from("medicines")
+      .delete()
+      .eq("id", id);
 
-  displayMedicines();
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Medicine delete nahi hui.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  loadMedicines();
 }
+
+
+/* DISPLAY MEDICINES */
 
 function displayMedicines(){
 
@@ -377,67 +534,128 @@ function displayMedicines(){
 
   const search =
     document.getElementById("search")
-    .value
-    .toLowerCase()
-    .trim();
+      .value
+      .toLowerCase()
+      .trim();
+
 
   const filtered =
     medicines.filter(function(medicine){
 
       return (
-        medicine.name.toLowerCase().includes(search) ||
-        medicine.company.toLowerCase().includes(search)
+
+        (medicine.name || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        (medicine.brand || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        (medicine.strength || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        (medicine.category || "")
+          .toLowerCase()
+          .includes(search)
+
       );
 
     });
 
-  list.innerHTML="";
+
+  list.innerHTML = "";
+
 
   if(filtered.length === 0){
 
     list.innerHTML =
-      '<tr><td colspan="7" class="empty">No medicines found.</td></tr>';
+      '<tr>' +
+      '<td colspan="9" class="empty">' +
+      'No medicines found.' +
+      '</td>' +
+      '</tr>';
 
     return;
   }
+
 
   filtered.forEach(function(medicine){
 
     const row =
       document.createElement("tr");
 
+
     row.innerHTML = `
-      <td>${escapeHtml(medicine.name)}</td>
-      <td>${escapeHtml(medicine.company)}</td>
-      <td>${escapeHtml(medicine.category)}</td>
-      <td>₹${medicine.price}</td>
-      <td>${medicine.stock}</td>
-      <td>${medicine.expiry || "-"}</td>
+
+      <td>${escapeHtml(medicine.name || "")}</td>
+
+      <td>${escapeHtml(medicine.brand || "")}</td>
+
+      <td>${escapeHtml(medicine.strength || "")}</td>
+
+      <td>${escapeHtml(medicine.category || "")}</td>
+
+      <td>₹${medicine.mrp ?? 0}</td>
+
+      <td>₹${medicine.sale_price ?? 0}</td>
+
+      <td>${medicine.stock ?? 0}</td>
+
+      <td>${medicine.expiry_date || "-"}</td>
+
       <td>
-        <button class="delete"
-          onclick="deleteMedicine(${medicine.id})">
+
+        <button
+          class="delete"
+          onclick="deleteMedicine('${medicine.id}')">
+
           Delete
+
         </button>
+
       </td>
+
     `;
 
+
     list.appendChild(row);
+
   });
+
 }
+
+
+/* SECURITY */
 
 function escapeHtml(text){
 
   return String(text)
+
     .replace(/&/g,"&amp;")
+
     .replace(/</g,"&lt;")
+
     .replace(/>/g,"&gt;")
+
     .replace(/"/g,"&quot;")
+
     .replace(/'/g,"&#039;");
 }
 
-displayMedicines();
+
+/* START */
+
+loadMedicines();
 
 </script>
 
 </body>
-  </html>
+</html>
