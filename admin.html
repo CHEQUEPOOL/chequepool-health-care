@@ -252,18 +252,32 @@ const supabaseClient =
   );
 async function loadDashboard(){
 
-    const { count, error } =
+    const { count: medicineCount, error: medicineError } =
         await supabaseClient
         .from("medicines")
         .select("*", { count: "exact", head: true });
 
-    if(error){
-        console.error("Dashboard error:", error);
-        return;
+    if(medicineError){
+        console.error("Medicines count error:", medicineError);
+    } else {
+        document.getElementById("medicines").textContent =
+            medicineCount || 0;
     }
 
-    document.getElementById("medicines").textContent = count || 0;
+    const { count: orderCount, error: orderError } =
+        await supabaseClient
+        .from("orders")
+        .select("*", { count: "exact", head: true });
+
+    if(orderError){
+        console.error("Orders count error:", orderError);
+    } else {
+        document.getElementById("orders").textContent =
+            orderCount || 0;
+    }
 }
+
+loadDashboard();
 
 loadDashboard();
 function showMessage(name){
