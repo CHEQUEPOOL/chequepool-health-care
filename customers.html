@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Customers - Cheque Pool Health Care</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f4f7f9;
+  color:#222;
+}
+
+.header{
+  background:#087f5b;
+  color:white;
+  padding:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.header h2{
+  margin:0;
+  font-size:20px;
+}
+
+.back{
+  background:white;
+  color:#087f5b;
+  border:0;
+  padding:9px 14px;
+  border-radius:8px;
+  font-weight:bold;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:18px;
+}
+
+h1{
+  margin-bottom:5px;
+}
+
+.subtitle{
+  color:#666;
+  margin-top:0;
+}
+
+.search{
+  margin-top:25px;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 2px 8px #0001;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border:1px solid #ccc;
+  border-radius:8px;
+  font-size:15px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+
+th,td{
+  padding:12px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
+}
+
+th{
+  background:#087f5b;
+  color:white;
+}
+
+.empty{
+  text-align:center;
+  padding:25px;
+  color:#777;
+}
+
+@media(max-width:700px){
+
+  table{
+    font-size:13px;
+  }
+
+  th,td{
+    padding:8px;
+  }
+
+  .header h2{
+    font-size:16px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+
+  <h2>👥 CHEQUE POOL HEALTH CARE</h2>
+
+  <button class="back" onclick="location.href='admin.html'">
+    ← Admin
+  </button>
+
+</header>
+
+<main class="container">
+
+  <h1>👥 Customers</h1>
+
+  <p class="subtitle">
+    Manage your medical shop customers.
+  </p>
+
+  <section class="search">
+
+    <h2>🔍 Customer List</h2>
+
+    <input
+      id="search"
+      type="text"
+      placeholder="Search customer by name or phone..."
+      oninput="displayCustomers()"
+    >
+
+    <div style="overflow-x:auto;">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+          </tr>
+
+        </thead>
+
+        <tbody id="customerList"></tbody>
+
+      </table>
+
+    </div>
+
+  </section>
+
+</main>
+
+<script>
+
+const SUPABASE_URL =
+  "https://ymhaxeferrpyhuavzcgu.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+let customers = [];
+
+
+/* LOAD CUSTOMERS */
+
+async function loadCustomers(){
+
+  const { data, error } =
+    await supabaseClient
+      .from("users")
+      .select("id, name, phone")
+      .order("name", { ascending:true });
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Customers load nahi ho paaye.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  customers = data || [];
+
+  displayCustomers();
+}
+
+
+/* DISPLAY CUSTOMERS */
+
+function displayCustomers(){
+
+  const list =
+    document.getElementById("customerList");
+
+  const search =
+    document.getElementById("search")
+      .value
+      .toLowerCase()
+      .trim();
+
+
+  const filtered =
+    customers.filter(function(customer){
+
+      return (
+
+        (customer.name || "")
+          .toLowerCase()
+          .includes(search)
+
+        ||
+
+        (customer.phone || "")
+          .toLowerCase()
+          .includes(search)
+
+      );
+
+    });
+
+
+  list.innerHTML = "";
+
+
+  if(filtered.length === 0){
+
+    list.innerHTML =
+      '<tr>' +
+      '<td colspan="2" class="empty">' +
+      'No customers found.' +
+      '</td>' +
+      '</tr>';
+
+    return;
+  }
+
+
+  filtered.forEach(function(customer){
+
+    const row =
+      document.createElement("tr");
+
+
+    row.innerHTML = `
+
+      <td>${escapeHtml(customer.name || "")}</td>
+
+      <td>${escapeHtml(customer.phone || "")}</td>
+
+    `;
+
+
+    list.appendChild(row);
+
+  });
+
+}
+
+
+/* SECURITY */
+
+function escapeHtml(text){
+
+  return String(text)
+
+    .replace(/&/g,"&amp;")
+
+    .replace(/</g,"&lt;")
+
+    .replace(/>/g,"&gt;")
+
+    .replace(/"/g,"&quot;")
+
+    .replace(/'/g,"&#039;");
+}
+
+
+/* START */
+
+loadCustomers();
+
+</script>
+
+</body>
+</html>
