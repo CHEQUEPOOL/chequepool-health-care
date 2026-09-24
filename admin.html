@@ -264,6 +264,7 @@ async function loadDashboard(){
             medicineCount || 0;
     }
 
+
     const { count: orderCount, error: orderError } =
         await supabaseClient
         .from("orders")
@@ -275,18 +276,22 @@ async function loadDashboard(){
         document.getElementById("orders").textContent =
             orderCount || 0;
     }
-}
-const { count: customerCount, error: customerError } =
-    await supabaseClient
-    .from("users")
-    .select("*", { count: "exact", head: true });
 
-if(customerError){
-    console.error("Customers count error:", customerError);
-} else {
-    document.getElementById("customers").textContent =
-        customerCount || 0;
+
+    const { count: customerCount, error: customerError } =
+        await supabaseClient
+        .from("users")
+        .select("*", { count: "exact", head: true });
+
+    if(customerError){
+        console.error("Customers count error:", customerError);
+    } else {
+        document.getElementById("customers").textContent =
+            customerCount || 0;
+    }
+
 }
+
 loadDashboard();
 
 loadDashboard();
