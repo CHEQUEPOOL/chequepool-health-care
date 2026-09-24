@@ -273,7 +273,64 @@ function showMessage(name){
 function logout(){
     alert("Admin logout will be connected with secure login.");
 }
+async function loadOrders(){
 
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("id, user_id, total_amount, status, created_at")
+    .order("created_at", { ascending:false })
+    .limit(10);
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Orders load nahi ho paaye.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  const tbody = document.getElementById("ordersTableBody");
+
+  tbody.innerHTML = "";
+
+  if(!data || data.length === 0){
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center;">
+          No orders found
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  data.forEach(order => {
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>#${order.id}</td>
+      <td>${order.user_id || "Customer"}</td>
+      <td>₹${order.total_amount || 0}</td>
+      <td>
+        <span class="status">
+          ${order.status || "Pending"}
+        </span>
+      </td>
+    `;
+
+    tbody.appendChild(row);
+
+  });
+
+}
+    loadOrders();
 </script>
 
 </body>
