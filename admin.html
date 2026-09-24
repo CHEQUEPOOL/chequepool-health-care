@@ -256,7 +256,22 @@ const supabaseClient =
     SUPABASE_URL,
     SUPABASE_KEY
   );
+async function loadDashboard(){
 
+    const { count, error } =
+        await supabaseClient
+        .from("medicines")
+        .select("*", { count: "exact", head: true });
+
+    if(error){
+        console.error("Dashboard error:", error);
+        return;
+    }
+
+    document.getElementById("medicines").textContent = count || 0;
+}
+
+loadDashboard();
 function showMessage(name){
     alert(name + " section will be connected next.");
 }
