@@ -276,7 +276,17 @@ async function loadDashboard(){
             orderCount || 0;
     }
 }
+const { count: customerCount, error: customerError } =
+    await supabaseClient
+    .from("users")
+    .select("*", { count: "exact", head: true });
 
+if(customerError){
+    console.error("Customers count error:", customerError);
+} else {
+    document.getElementById("customers").textContent =
+        customerCount || 0;
+}
 loadDashboard();
 
 loadDashboard();
