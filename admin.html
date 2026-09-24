@@ -246,6 +246,16 @@ th,td{
 </main>
 
 <script>
+    const SUPABASE_URL =
+  "https://ymhaxeferrpyhuavzcgu.supabase.co";
+const SUPABASE_KEY =
+  "sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
 function showMessage(name){
     alert(name + " section will be connected next.");
