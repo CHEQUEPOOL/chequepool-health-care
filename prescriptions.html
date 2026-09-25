@@ -175,6 +175,10 @@ async function loadPrescriptions(){
         <th>ID</th>
         <th>User ID</th>
         <th>File</th>
+        <th>Status</th>
+        <th>Reviewed By</th>
+        <th>Reviewed At</th>
+        <th>Created At</th>
         <th>Action</th>
       </tr>
   `;
@@ -184,11 +188,19 @@ async function loadPrescriptions(){
     html += `
       <tr>
 
-        <td>${p.id}</td>
+        <td>${p.id || "-"}</td>
 
         <td>${p.user_id || "-"}</td>
 
         <td>${p.private_file_key || "-"}</td>
+
+        <td>${p.status || "Pending"}</td>
+
+        <td>${p.reviewed_by || "-"}</td>
+
+        <td>${p.reviewed_at || "-"}</td>
+
+        <td>${p.created_at || "-"}</td>
 
         <td>
           <button
