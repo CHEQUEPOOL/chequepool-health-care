@@ -144,29 +144,11 @@ th{
   >
 
   <br><br>
-<input
-  id="customerPhone"
-  type="tel"
-  placeholder="Phone number"
->
-
-<br><br>
-
-<button onclick="addCustomer()">
-  ➕ Add Customer
-</button>
+  
   <input
     id="customerPhone"
     type="text"
     placeholder="Phone number"
-  >
-
-  <br><br>
-
-  <input
-    id="customerEmail"
-    type="email"
-    placeholder="Email (optional)"
   >
 
   <br><br>
@@ -366,9 +348,6 @@ async function addCustomer(){
   const phone =
     document.getElementById("customerPhone").value.trim();
 
-  const email =
-    document.getElementById("customerEmail").value.trim();
-
 
   if(!name){
 
@@ -385,7 +364,6 @@ async function addCustomer(){
         {
           name: name,
           phone: phone,
-          email: email || null
         }
       ])
       .select();
@@ -409,8 +387,7 @@ async function addCustomer(){
 
   document.getElementById("customerName").value = "";
   document.getElementById("customerPhone").value = "";
-  document.getElementById("customerEmail").value = "";
-
+  
 
   loadCustomers();
   }
