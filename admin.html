@@ -291,7 +291,17 @@ async function loadDashboard(){
     }
 
 }
+    const { count: prescriptionCount, error: prescriptionError } =
+        await supabaseClient
+        .from("prescriptions")
+        .select("*", { count: "exact", head: true });
 
+    if(prescriptionError){
+        console.error("Prescriptions count error:", prescriptionError);
+    } else {
+        document.getElementById("prescriptions").textContent =
+            prescriptionCount || 0;
+        }
 loadDashboard();
 
 loadDashboard();
