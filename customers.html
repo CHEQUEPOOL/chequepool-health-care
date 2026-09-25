@@ -133,7 +133,50 @@ th{
   <p class="subtitle">
     Manage your medical shop customers.
   </p>
+<section class="search">
 
+  <h2>➕ Add Customer</h2>
+
+  <input
+    id="customerName"
+    type="text"
+    placeholder="Customer name"
+  >
+
+  <br><br>
+
+  <input
+    id="customerPhone"
+    type="text"
+    placeholder="Phone number"
+  >
+
+  <br><br>
+
+  <input
+    id="customerEmail"
+    type="email"
+    placeholder="Email (optional)"
+  >
+
+  <br><br>
+
+  <button
+    onclick="addCustomer()"
+    style="
+      background:#087f5b;
+      color:white;
+      border:0;
+      padding:11px 18px;
+      border-radius:8px;
+      font-weight:bold;
+      cursor:pointer;
+    "
+  >
+    ➕ Add Customer
+  </button>
+
+</section>
   <section class="search">
 
     <h2>🔍 Customer List</h2>
@@ -305,7 +348,62 @@ function escapeHtml(text){
 
 
 /* START */
+async function addCustomer(){
 
+  const name =
+    document.getElementById("customerName").value.trim();
+
+  const phone =
+    document.getElementById("customerPhone").value.trim();
+
+  const email =
+    document.getElementById("customerEmail").value.trim();
+
+
+  if(!name){
+
+    alert("Please enter customer name.");
+
+    return;
+  }
+
+
+  const { data, error } =
+    await supabaseClient
+      .from("users")
+      .insert([
+        {
+          name: name,
+          phone: phone,
+          email: email || null
+        }
+      ])
+      .select();
+
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Customer add nahi ho paaya.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  alert("Customer added successfully.");
+
+
+  document.getElementById("customerName").value = "";
+  document.getElementById("customerPhone").value = "";
+  document.getElementById("customerEmail").value = "";
+
+
+  loadCustomers();
+  }
 loadCustomers();
 
 </script>
