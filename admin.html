@@ -290,7 +290,7 @@ async function loadDashboard(){
             customerCount || 0;
     }
 
-}
+
     const { count: prescriptionCount, error: prescriptionError } =
         await supabaseClient
         .from("prescriptions")
@@ -301,7 +301,10 @@ async function loadDashboard(){
     } else {
         document.getElementById("prescriptions").textContent =
             prescriptionCount || 0;
-        }
+    }
+
+}
+
 loadDashboard();
 
 loadDashboard();
