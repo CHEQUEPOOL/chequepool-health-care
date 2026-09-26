@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CHEQUE POOL HEALTH CARE AND MEDICOS</title>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
 body{
@@ -200,7 +200,18 @@ footer{
 </footer>
 
 <script>
+const SUPABASE_URL =
+  "https://ymhaxeferrpyhuavzcgu.supabase.co";
 
+const SUPABASE_KEY =
+  "sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
+
+const supabaseClient =
+  supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+  
 const medicines = [
   {name:"Paracetamol 500mg", price:25},
   {name:"Paracetamol 650mg", price:30},
@@ -315,17 +326,86 @@ function clearCart(){
   updateCart();
 }
 
-function showPrescription(){
+async function showPrescription(){
 
   const file =
     document.getElementById("prescription").files[0];
 
-  if(file){
-    document.getElementById("fileName").innerText =
-      "Selected: " + file.name;
+  if(!file){
+    return;
   }
-}
 
+  if(file.size > 50 * 1024 * 1024){
+
+    alert("Prescription file 50 MB se zyada nahi honi chahiye.");
+
+    document.getElementById("prescription").value = "";
+
+    return;
+  }
+
+  document.getElementById("fileName").innerText =
+    "Uploading: " + file.name + "...";
+
+  try{
+
+    const fileName =
+      crypto.randomUUID() +
+      "_" +
+      file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+
+    const filePath =
+      "uploads/" + fileName;
+
+    const { error } =
+      await supabaseClient
+        .storage
+        .from("prescriptions")
+        .upload(
+          filePath,
+          file,
+          {
+            cacheControl:"3600",
+            upsert:false
+          }
+        );
+
+    if(error){
+
+      console.error(error);
+
+      alert(
+        "Prescription upload failed:\n\n" +
+        error.message
+      );
+
+      document.getElementById("fileName").innerText =
+        "Upload failed";
+
+      return;
+    }
+
+    document.getElementById("fileName").innerText =
+      "✅ Uploaded: " + file.name;
+
+    // Save uploaded file path for Place Order
+    window.prescriptionPath = filePath;
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    alert(
+      "Something went wrong:\n\n" +
+      error.message
+    );
+
+  }
+
+}
+  
 function placeOrder(){
 
   if(cart.length === 0){
