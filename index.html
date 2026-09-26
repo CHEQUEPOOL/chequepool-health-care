@@ -405,8 +405,7 @@ async function showPrescription(){
   }
 
 }
-  
-function placeOrder(){
+  async function placeOrder(){
 
   if(cart.length === 0){
     alert("Please add medicine to your cart first.");
@@ -427,49 +426,150 @@ function placeOrder(){
     return;
   }
 
+  const file =
+    document.getElementById("prescription").files[0];
+
+  /* =========================
+     1. FIND / CREATE CUSTOMER
+     ========================= */
+
+  let { data: customer, error: customerError } =
+    await supabaseClient
+      .from("users")
+      .select("id")
+      .eq("phone", phone)
+      .maybeSingle();
+
+  if(customerError){
+
+    console.error("Customer search error:", customerError);
+
+    alert(
+      "Customer check failed:\n\n" +
+      customerError.message
+    );
+
+    return;
+  }
+
+  if(!customer){
+
+    const { data: newCustomer, error: createError } =
+      await supabaseClient
+        .from("users")
+        .insert({
+          id: crypto.randomUUID(),
+          name: name,
+          phone: phone
+        })
+        .select("id")
+        .single();
+
+    if(createError){
+
+      console.error("Customer create error:", createError);
+
+      alert(
+        "Customer save failed:\n\n" +
+        createError.message
+      );
+
+      return;
+    }
+
+    customer = newCustomer;
+  }
+
+  /* =========================
+     2. SAVE PRESCRIPTION
+     ========================= */
+
+  if(file && window.prescriptionPath){
+
+    const { error: prescriptionError } =
+      await supabaseClient
+        .from("prescriptions")
+        .insert({
+          id: crypto.randomUUID(),
+          user_id: customer.id,
+          private_file_key: window.prescriptionPath,
+          status: "Pending"
+        });
+
+    if(prescriptionError){
+
+      console.error(
+        "Prescription database error:",
+        prescriptionError
+      );
+
+      alert(
+        "Prescription database save failed:\n\n" +
+        prescriptionError.message
+      );
+
+      return;
+    }
+  }
+
+  /* =========================
+     3. CREATE WHATSAPP MESSAGE
+     ========================= */
+
   let message =
-    "Hello CHEQUE POOL HEALTH CARE AND MEDICOS,%0A%0A";
+    "Hello CHEQUE POOL HEALTH CARE AND MEDICOS,\n\n";
 
-  message += "I want to place an order.%0A%0A";
+  message +=
+    "I want to place an order.\n\n";
 
-  message += "Customer: " + name + "%0A";
-  message += "Phone: " + phone + "%0A";
-  message += "Address: " + address + "%0A%0A";
+  message +=
+    "Customer: " + name + "\n";
 
-  message += "Order:%0A";
+  message +=
+    "Phone: " + phone + "\n";
+
+  message +=
+    "Address: " + address + "\n\n";
+
+  message += "Order:\n";
 
   let total = 0;
 
   cart.forEach(item => {
 
     const amount = item.price * item.qty;
+
     total += amount;
 
     message +=
       "- " + item.name +
       " × " + item.qty +
-      " = ₹" + amount + "%0A";
+      " = ₹" + amount + "\n";
   });
 
-  message += "%0ATotal: ₹" + total;
-
-  const file =
-    document.getElementById("prescription").files[0];
+  message +=
+    "\nTotal: ₹" + total;
 
   if(file){
+
     message +=
-      "%0A%0APrescription selected: " +
+      "\n\nPrescription uploaded: " +
       file.name;
   }
 
   message +=
-    "%0A%0APlease confirm availability and delivery.";
+    "\n\nPlease confirm availability and delivery.";
+
+  /* =========================
+     4. OPEN WHATSAPP
+     ========================= */
 
   window.open(
-    "https://wa.me/919651962524?text=" + message,
+    "https://wa.me/919651962524?text=" +
+    encodeURIComponent(message),
     "_blank"
   );
-}
+  }
 
 displayMedicines();
 updateCart();
