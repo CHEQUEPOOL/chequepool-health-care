@@ -50,16 +50,38 @@ body{
   margin-bottom:15px;
 }
 
+input,
+select{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  margin-bottom:15px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  font-size:16px;
+}
+
+.upload{
+  background:#2563eb;
+  color:white;
+  width:100%;
+  font-size:16px;
+  padding:12px;
+}
+
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:15px;
+  display:block;
+  overflow-x:auto;
 }
 
 th,td{
   padding:12px;
   border-bottom:1px solid #ddd;
   text-align:left;
+  white-space:nowrap;
 }
 
 th{
@@ -73,6 +95,15 @@ button{
   cursor:pointer;
 }
 
+.fileButton{
+  background:#16a34a;
+  color:white;
+  text-decoration:none;
+  padding:8px 12px;
+  border-radius:6px;
+  display:inline-block;
+}
+
 .delete{
   background:#dc2626;
   color:white;
@@ -82,6 +113,10 @@ button{
   text-align:center;
   padding:30px;
   color:#666;
+}
+
+.status{
+  font-weight:bold;
 }
 </style>
 
@@ -101,11 +136,46 @@ button{
 
 <div class="container">
 
+  <!-- ADD PRESCRIPTION -->
+
   <div class="card">
 
-    <h2>📄 Prescriptions</h2>
+    <h2>➕ Add Prescription</h2>
 
-    <p>Manage customer prescriptions.</p>
+    <label>Customer</label>
+
+    <select id="customerSelect">
+
+      <option value="">
+        Select Customer
+      </option>
+
+    </select>
+
+    <label>Prescription File</label>
+
+    <input
+      id="prescriptionFile"
+      type="file"
+      accept="image/*,.pdf"
+    >
+
+    <button
+      class="upload"
+      onclick="uploadPrescription()">
+
+      📤 Upload Prescription
+
+    </button>
+
+  </div>
+
+
+  <!-- PRESCRIPTION LIST -->
+
+  <div class="card">
+
+    <h2>📋 Prescription List</h2>
 
     <div id="prescriptionCount">
       Loading...
@@ -118,6 +188,7 @@ button{
   </div>
 
 </div>
+
 
 <script>
 
@@ -134,108 +205,404 @@ const supabaseClient =
   );
 
 
+/* LOAD CUSTOMERS */
+
+async function loadCustomers(){
+
+  const { data, error } =
+    await supabaseClient
+      .from("users")
+      .select("id,name,phone")
+      .order("name", { ascending:true });
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Customers load nahi ho paaye.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  const select =
+    document.getElementById("customerSelect");
+
+  select.innerHTML =
+    '<option value="">Select Customer</option>';
+
+  (data || []).forEach(customer => {
+
+    const option =
+      document.createElement("option");
+
+    option.value = customer.id;
+
+    option.textContent =
+      customer.name +
+      " - " +
+      (customer.phone || "");
+
+    select.appendChild(option);
+
+  });
+
+}
+
+
+/* UPLOAD PRESCRIPTION */
+
+async function uploadPrescription(){
+
+  const customerId =
+    document.getElementById("customerSelect").value;
+
+  const fileInput =
+    document.getElementById("prescriptionFile");
+
+  const file =
+    fileInput.files[0];
+
+
+  if(!customerId){
+
+    alert("Please select a customer.");
+
+    return;
+  }
+
+
+  if(!file){
+
+    alert("Please select a prescription file.");
+
+    return;
+  }
+
+
+  /* FILE SIZE CHECK */
+
+  if(file.size > 50 * 1024 * 1024){
+
+    alert(
+      "File size 50 MB se zyada nahi honi chahiye."
+    );
+
+    return;
+  }
+
+
+  try{
+
+    /*
+      Unique file path
+    */
+
+    const fileName =
+      crypto.randomUUID() +
+      "_" +
+      file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+
+
+    const filePath =
+      "uploads/" + fileName;
+
+
+    /* UPLOAD FILE */
+
+    const { error: uploadError } =
+      await supabaseClient
+        .storage
+        .from("prescriptions")
+        .upload(
+          filePath,
+          file,
+          {
+            cacheControl:"3600",
+            upsert:false
+          }
+        );
+
+
+    if(uploadError){
+
+      console.error(uploadError);
+
+      alert(
+        "File upload failed:\n\n" +
+        uploadError.message
+      );
+
+      return;
+    }
+
+
+    /* SAVE DATABASE RECORD */
+
+    const { error: insertError } =
+      await supabaseClient
+        .from("prescriptions")
+        .insert({
+
+          id: crypto.randomUUID(),
+
+          user_id: customerId,
+
+          private_file_key: filePath,
+
+          status: "Pending"
+
+        });
+
+
+    if(insertError){
+
+      console.error(insertError);
+
+      alert(
+        "Prescription record save nahi hua:\n\n" +
+        insertError.message
+      );
+
+      return;
+    }
+
+
+    alert(
+      "Prescription uploaded successfully."
+    );
+
+
+    document.getElementById(
+      "customerSelect"
+    ).value = "";
+
+    fileInput.value = "";
+
+
+    loadPrescriptions();
+
+  }
+
+  catch(error){
+
+    console.error(error);
+
+    alert(
+      "Something went wrong:\n\n" +
+      error.message
+    );
+
+  }
+
+}
+
+
+/* LOAD PRESCRIPTIONS */
+
 async function loadPrescriptions(){
 
   const { data, error } =
     await supabaseClient
       .from("prescriptions")
       .select("*")
-      .order("id", { ascending:false });
+      .order("created_at", { ascending:false });
+
 
   if(error){
 
     console.error(error);
 
-    document.getElementById("prescriptionList").innerHTML =
+    document.getElementById(
+      "prescriptionList"
+    ).innerHTML =
       "<p>Prescriptions load nahi ho paayi.</p>" +
       "<p>" + error.message + "</p>";
 
     return;
   }
 
-  const prescriptions = data || [];
 
-  document.getElementById("prescriptionCount").innerHTML =
+  const prescriptions =
+    data || [];
+
+
+  document.getElementById(
+    "prescriptionCount"
+  ).innerHTML =
     "<b>Total Prescriptions: " +
     prescriptions.length +
     "</b>";
 
+
   if(prescriptions.length === 0){
 
-    document.getElementById("prescriptionList").innerHTML =
+    document.getElementById(
+      "prescriptionList"
+    ).innerHTML =
       '<div class="empty">No prescriptions found.</div>';
 
     return;
   }
 
+
   let html = `
+
     <table>
 
       <tr>
+
         <th>ID</th>
+
         <th>User ID</th>
+
         <th>File</th>
+
         <th>Status</th>
+
         <th>Reviewed By</th>
+
         <th>Reviewed At</th>
+
         <th>Created At</th>
+
         <th>Action</th>
+
       </tr>
+
   `;
 
-  prescriptions.forEach(p => {
+
+  for(const p of prescriptions){
+
+    let fileButton = "-";
+
+
+    /*
+      Create temporary signed URL
+      for private prescription file
+    */
+
+    if(p.private_file_key){
+
+      const { data: signedData } =
+        await supabaseClient
+          .storage
+          .from("prescriptions")
+          .createSignedUrl(
+            p.private_file_key,
+            3600
+          );
+
+
+      if(
+        signedData &&
+        signedData.signedUrl
+      ){
+
+        fileButton = `
+          <a
+            class="fileButton"
+            href="${signedData.signedUrl}"
+            target="_blank">
+
+            📄 View
+
+          </a>
+        `;
+
+      }
+
+    }
+
 
     html += `
+
       <tr>
 
-        <td>${p.id || "-"}</td>
-
-        <td>${p.user_id || "-"}</td>
-
-        <td>${p.private_file_key || "-"}</td>
-
-        <td>${p.status || "Pending"}</td>
-
-        <td>${p.reviewed_by || "-"}</td>
-
-        <td>${p.reviewed_at || "-"}</td>
-
-        <td>${p.created_at || "-"}</td>
+        <td>
+          ${p.id || "-"}
+        </td>
 
         <td>
+          ${p.user_id || "-"}
+        </td>
+
+        <td>
+          ${fileButton}
+        </td>
+
+        <td class="status">
+          ${p.status || "Pending"}
+        </td>
+
+        <td>
+          ${p.reviewed_by || "-"}
+        </td>
+
+        <td>
+          ${p.reviewed_at || "-"}
+        </td>
+
+        <td>
+          ${p.created_at || "-"}
+        </td>
+
+        <td>
+
           <button
             class="delete"
             onclick="deletePrescription('${p.id}')">
+
             Delete
+
           </button>
+
         </td>
 
       </tr>
+
     `;
 
-  });
+  }
+
 
   html += "</table>";
 
-  document.getElementById("prescriptionList").innerHTML =
+
+  document.getElementById(
+    "prescriptionList"
+  ).innerHTML =
     html;
+
 }
 
+
+/* DELETE */
 
 async function deletePrescription(id){
 
   const confirmDelete =
-    confirm("Delete this prescription?");
+    confirm(
+      "Delete this prescription?"
+    );
+
 
   if(!confirmDelete){
+
     return;
+
   }
+
 
   const { error } =
     await supabaseClient
       .from("prescriptions")
       .delete()
       .eq("id", id);
+
 
   if(error){
 
@@ -245,17 +612,28 @@ async function deletePrescription(id){
     );
 
     return;
+
   }
 
-  alert("Prescription deleted successfully.");
+
+  alert(
+    "Prescription deleted successfully."
+  );
+
 
   loadPrescriptions();
+
 }
 
+
+/* START */
+
+loadCustomers();
 
 loadPrescriptions();
 
 </script>
 
 </body>
+
 </html>
