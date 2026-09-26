@@ -405,7 +405,8 @@ async function showPrescription(){
   }
 
 }
-  async function placeOrder(){
+  
+async function placeOrder(){
 
   if(cart.length === 0){
     alert("Please add medicine to your cart first.");
@@ -429,6 +430,7 @@ async function showPrescription(){
   const file =
     document.getElementById("prescription").files[0];
 
+
   /* =========================
      1. FIND / CREATE CUSTOMER
      ========================= */
@@ -442,7 +444,10 @@ async function showPrescription(){
 
   if(customerError){
 
-    console.error("Customer search error:", customerError);
+    console.error(
+      "Customer search error:",
+      customerError
+    );
 
     alert(
       "Customer check failed:\n\n" +
@@ -451,6 +456,7 @@ async function showPrescription(){
 
     return;
   }
+
 
   if(!customer){
 
@@ -467,7 +473,10 @@ async function showPrescription(){
 
     if(createError){
 
-      console.error("Customer create error:", createError);
+      console.error(
+        "Customer create error:",
+        createError
+      );
 
       alert(
         "Customer save failed:\n\n" +
@@ -479,6 +488,7 @@ async function showPrescription(){
 
     customer = newCustomer;
   }
+
 
   /* =========================
      2. SAVE PRESCRIPTION
@@ -512,8 +522,9 @@ async function showPrescription(){
     }
   }
 
+
   /* =========================
-     3. CREATE WHATSAPP MESSAGE
+     3. CREATE ORDER MESSAGE
      ========================= */
 
   let message =
@@ -533,6 +544,7 @@ async function showPrescription(){
 
   message += "Order:\n";
 
+
   let total = 0;
 
   cart.forEach(item => {
@@ -547,6 +559,41 @@ async function showPrescription(){
       " = ₹" + amount + "\n";
   });
 
+
+  /* =========================
+     4. SAVE ORDER
+     ========================= */
+
+  const { error: orderError } =
+    await supabaseClient
+      .from("orders")
+      .insert({
+        id: crypto.randomUUID(),
+        user_id: customer.id,
+        total_amount: total,
+        status: "PENDING"
+      });
+
+  if(orderError){
+
+    console.error(
+      "Order database error:",
+      orderError
+    );
+
+    alert(
+      "Order save failed:\n\n" +
+      orderError.message
+    );
+
+    return;
+  }
+
+
+  /* =========================
+     5. COMPLETE WHATSAPP MESSAGE
+     ========================= */
+
   message +=
     "\nTotal: ₹" + total;
 
@@ -560,8 +607,9 @@ async function showPrescription(){
   message +=
     "\n\nPlease confirm availability and delivery.";
 
+
   /* =========================
-     4. OPEN WHATSAPP
+     6. OPEN WHATSAPP
      ========================= */
 
   window.open(
@@ -569,8 +617,7 @@ async function showPrescription(){
     encodeURIComponent(message),
     "_blank"
   );
-  }
-
+}
 displayMedicines();
 updateCart();
 
