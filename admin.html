@@ -319,7 +319,7 @@ async function loadOrders(){
 
   const { data, error } = await supabaseClient
     .from("orders")
-    .select("id, user_id, total_amount, status, created_at")
+    .select("id, user_id, total, status, created_at")
     .order("created_at", { ascending:false })
     .limit(10);
 
@@ -359,7 +359,7 @@ async function loadOrders(){
     row.innerHTML = `
       <td>#${order.id}</td>
       <td>${order.user_id || "Customer"}</td>
-      <td>₹${order.total_amount || 0}</td>
+      <td>₹${order.total || 0}</td>
       <td>
         <span class="status">
           ${order.status || "Pending"}
