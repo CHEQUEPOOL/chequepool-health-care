@@ -603,7 +603,16 @@ cart.forEach(item => {
 
 console.log("CART:", cart);
 console.log("TOTAL:", total);
+if(!Number.isFinite(total) || total <= 0){
 
+  console.error("Invalid total:", total);
+
+  alert(
+    "Order total is invalid: " + total
+  );
+
+  return;
+  }
 
   /* =========================
      5. SAVE ORDER
@@ -617,7 +626,7 @@ console.log("TOTAL:", total);
 
     address_id: addressId,
 
-    total: total,
+    total: Number(total),
 
     status: "PENDING"
   };
