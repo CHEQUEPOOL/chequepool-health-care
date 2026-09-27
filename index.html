@@ -514,40 +514,39 @@ async function showPrescription(){
   }
 
 
-  /* =========================
-     2. SAVE ADDRESS
-     ========================= */
+/* =========================
+   2. SAVE ADDRESS
+   ========================= */
 
-  const { data: savedAddress, error: addressError } =
-    await supabaseClient
-      .from("addresses")
-      .insert({
-        id: crypto.randomUUID(),
-        user_id: customer.id,
-        recipient_name: name,
-        phone: phone,
-        address: address,
-        city: "Gorakhpur",
-        pincode: pincode
-      })
-      .select("id")
-      .single();
+const addressId = crypto.randomUUID();
 
-  if(addressError){
+const { error: addressError } =
+  await supabaseClient
+    .from("addresses")
+    .insert({
+      id: addressId,
+      user_id: customer.id,
+      recipient_name: name,
+      phone: phone,
+      address: address,
+      city: "Gorakhpur",
+      pincode: pincode
+    });
 
-    console.error(
-      "Address database error:",
-      addressError
-    );
+if(addressError){
 
-    alert(
-      "Address save failed:\n\n" +
-      addressError.message
-    );
+  console.error(
+    "Address database error:",
+    addressError
+  );
 
-    return;
-  }
+  alert(
+    "Address save failed:\n\n" +
+    addressError.message
+  );
 
+  return;
+}
 
   /* =========================
      3. SAVE PRESCRIPTION
@@ -611,7 +610,7 @@ async function showPrescription(){
 
     user_id: customer.id,
 
-    address_id: savedAddress.id,
+    address_id: addressId,
 
     total_amount: total,
 
