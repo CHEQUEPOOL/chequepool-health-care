@@ -1,1 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<title>Admin Login - Cheque Pool Health Care</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f7f9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.login-box{
+    background:white;
+    width:90%;
+    max-width:400px;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 2px 12px #0002;
+}
+
+h1{
+    text-align:center;
+    color:#087f5b;
+    margin-top:0;
+}
+
+input{
+    width:100%;
+    padding:13px;
+    margin:8px 0;
+    border:1px solid #ccc;
+    border-radius:8px;
+    font-size:16px;
+}
+
+button{
+    width:100%;
+    padding:13px;
+    margin-top:12px;
+    border:0;
+    border-radius:8px;
+    background:#087f5b;
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+}
+
+#message{
+    margin-top:15px;
+    text-align:center;
+    color:#c00;
+}
+</style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <h1>🔐 Admin Login</h1>
+
+    <input
+        id="email"
+        type="email"
+        placeholder="Admin Email"
+    >
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Password"
+    >
+
+    <button onclick="login()">
+        Login
+    </button>
+
+    <div id="message"></div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL =
+"https://ymhaxeferrpyhuavzcgu.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
+
+const supabaseClient =
+window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+async function login(){
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    const message =
+        document.getElementById("message");
+
+    message.textContent = "";
+
+    if(!email || !password){
+
+        message.textContent =
+            "Please enter email and password.";
+
+        return;
+    }
+
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+    if(error){
+
+        console.error(error);
+
+        message.textContent =
+            error.message;
+
+        return;
+    }
+
+    if(data.session){
+
+        window.location.href = "admin.html";
+
+    }
+
+}
+
+</script>
+
+</body>
+  </html>
