@@ -106,7 +106,32 @@ window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+async function checkAdmin(){
 
+    const { data: { session } } =
+        await supabaseClient.auth.getSession();
+
+    if(!session){
+
+        window.location.href = "admin-login.html";
+
+        return;
+    }
+
+    loadDashboard();
+    loadOrders();
+}
+
+
+async function logout(){
+
+    await supabaseClient.auth.signOut();
+
+    window.location.href = "admin-login.html";
+}
+    
+checkAdmin();
+    
 async function login(){
 
     const email =
