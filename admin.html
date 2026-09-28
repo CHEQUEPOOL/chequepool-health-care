@@ -324,14 +324,8 @@ async function loadOrders(){
     .limit(10);
 
   if(error){
-
     console.error(error);
-
-    alert(
-      "Orders load nahi ho paaye.\n\n" +
-      error.message
-    );
-
+    alert("Orders load nahi ho paaye.\n\n" + error.message);
     return;
   }
 
@@ -340,7 +334,6 @@ async function loadOrders(){
   tbody.innerHTML = "";
 
   if(!data || data.length === 0){
-
     tbody.innerHTML = `
       <tr>
         <td colspan="4" style="text-align:center;">
@@ -348,7 +341,6 @@ async function loadOrders(){
         </td>
       </tr>
     `;
-
     return;
   }
 
@@ -356,14 +348,40 @@ async function loadOrders(){
 
     const row = document.createElement("tr");
 
+    const status = order.status || "PENDING";
+
     row.innerHTML = `
       <td>#${order.id}</td>
+
       <td>${order.user_id || "Customer"}</td>
+
       <td>₹${order.total || 0}</td>
+
       <td>
         <span class="status">
-          ${order.status || "Pending"}
+          ${status}
         </span>
+
+        <br><br>
+
+        ${
+          status === "PENDING"
+          ? `
+            <button
+              onclick="updateOrderStatus('${order.id}','APPROVED')"
+              style="background:#087f5b;color:white;border:0;padding:7px 10px;border-radius:6px;margin-right:5px;">
+              Approve
+            </button>
+
+            <button
+              onclick="updateOrderStatus('${order.id}','REJECTED')"
+              style="background:#c62828;color:white;border:0;padding:7px 10px;border-radius:6px;">
+              Reject
+            </button>
+          `
+          : ""
+        }
+
       </td>
     `;
 
@@ -372,7 +390,46 @@ async function loadOrders(){
   });
 
 }
-    loadOrders();
+
+
+async function updateOrderStatus(orderId, newStatus){
+
+  const confirmChange = confirm(
+    "Order status " + newStatus + " karna hai?"
+  );
+
+  if(!confirmChange){
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("orders")
+    .update({
+      status: newStatus
+    })
+    .eq("id", orderId);
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Status update nahi hua.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    "Order status " +
+    newStatus +
+    " successfully updated."
+  );
+
+  loadOrders();
+      }
+    checkAdmin();
 </script>
 
 </body>
