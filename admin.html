@@ -221,15 +221,17 @@ th,td{
 
         <h2>Recent Orders</h2>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Order</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
+<table>
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
 
             <tbody id="ordersTableBody">
             </tbody>
@@ -319,8 +321,24 @@ async function loadOrders(){
 
   const { data, error } = await supabaseClient
     .from("orders")
-    .select("id, user_id, total, status, created_at")
-    .order("created_at", { ascending:false })
+    .select(`
+      id,
+      total,
+      status,
+      created_at,
+      users (
+        name,
+        phone
+      ),
+      addresses (
+        recipient_name,
+        phone,
+        address,
+        city,
+        pincode
+      )
+    `)
+    .order("created_at", { ascending: false })
     .limit(10);
 
   if(error){
@@ -336,7 +354,7 @@ async function loadOrders(){
   if(!data || data.length === 0){
     tbody.innerHTML = `
       <tr>
-        <td colspan="4" style="text-align:center;">
+        <td colspan="6" style="text-align:center;">
           No orders found
         </td>
       </tr>
@@ -350,19 +368,46 @@ async function loadOrders(){
 
     const status = order.status || "PENDING";
 
+    const customerName =
+      order.users?.name ||
+      order.addresses?.recipient_name ||
+      "Customer";
+
+    const phone =
+      order.users?.phone ||
+      order.addresses?.phone ||
+      "-";
+
+    const fullAddress = `
+      ${order.addresses?.address || ""}
+      ${order.addresses?.city || ""}
+      ${order.addresses?.pincode || ""}
+    `.trim() || "-";
+
     row.innerHTML = `
-      <td>#${order.id}</td>
+      <td>
+        ${customerName}
+      </td>
 
-      <td>${order.user_id || "Customer"}</td>
+      <td>
+        ${phone}
+      </td>
 
-      <td>₹${order.total || 0}</td>
+      <td>
+        ${fullAddress}
+      </td>
+
+      <td>
+        ₹${order.total || 0}
+      </td>
 
       <td>
         <span class="status">
           ${status}
         </span>
+      </td>
 
-        <br><br>
+      <td>
 
         ${
           status === "PENDING"
@@ -379,7 +424,7 @@ async function loadOrders(){
               Reject
             </button>
           `
-          : ""
+          : "No action"
         }
 
       </td>
@@ -389,8 +434,7 @@ async function loadOrders(){
 
   });
 
-}
-
+    }
 
 async function updateOrderStatus(orderId, newStatus){
 
