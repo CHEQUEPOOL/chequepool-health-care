@@ -252,7 +252,8 @@ const supabaseClient =
     SUPABASE_URL,
     SUPABASE_KEY
   );
-async function loadDashboard(){
+
+    async function loadDashboard(){
 
     const { count: medicineCount, error: medicineError } =
         await supabaseClient
@@ -280,7 +281,7 @@ async function loadDashboard(){
     }
 
 
-const { count: customerCount, error: customerError } =
+    const { count: customerCount, error: customerError } =
         await supabaseClient
         .from("users")
         .select("*", { count: "exact", head: true });
@@ -303,7 +304,9 @@ const { count: customerCount, error: customerError } =
     } else {
         document.getElementById("prescriptions").textContent =
             prescriptionCount || 0;
-        }
+    }
+
+}
 
 loadDashboard();
 function showMessage(name){
