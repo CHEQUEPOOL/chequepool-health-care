@@ -280,7 +280,7 @@ async function loadDashboard(){
     }
 
 
-    const { count: customerCount, error: customerError } =
+const { count: customerCount, error: customerError } =
         await supabaseClient
         .from("users")
         .select("*", { count: "exact", head: true });
@@ -303,9 +303,7 @@ async function loadDashboard(){
     } else {
         document.getElementById("prescriptions").textContent =
             prescriptionCount || 0;
-    }
-
-}
+        }
 
 loadDashboard();
 function showMessage(name){
