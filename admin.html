@@ -317,33 +317,19 @@ function showMessage(name){
 function logout(){
     alert("Admin logout will be connected with secure login.");
 }
+
 async function loadOrders(){
 
-  const { data, error } = await supabaseClient
-    .from("orders")
-    .select(`
-      id,
-      total,
-      status,
-      created_at,
-      users (
-        name,
-        phone
-      ),
-      addresses (
-        recipient_name,
-        phone,
-        address,
-        city,
-        pincode
-      )
-    `)
-    .order("created_at", { ascending: false })
-    .limit(10);
+  const { data: orders, error: ordersError } =
+    await supabaseClient
+      .from("orders")
+      .select("id, user_id, address_id, total, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(10);
 
-  if(error){
-    console.error(error);
-    alert("Orders load nahi ho paaye.\n\n" + error.message);
+  if(ordersError){
+    console.error(ordersError);
+    alert("Orders load nahi ho paaye.\n\n" + ordersError.message);
     return;
   }
 
@@ -351,7 +337,7 @@ async function loadOrders(){
 
   tbody.innerHTML = "";
 
-  if(!data || data.length === 0){
+  if(!orders || orders.length === 0){
     tbody.innerHTML = `
       <tr>
         <td colspan="6" style="text-align:center;">
@@ -362,27 +348,63 @@ async function loadOrders(){
     return;
   }
 
-  data.forEach(order => {
+  for(const order of orders){
 
-    const row = document.createElement("tr");
+    let customerName = "Customer";
+    let phone = "-";
+    let fullAddress = "-";
+
+    // Get customer details
+    if(order.user_id){
+
+      const { data: user } = await supabaseClient
+        .from("users")
+        .select("name, phone")
+        .eq("id", order.user_id)
+        .maybeSingle();
+
+      if(user){
+        customerName = user.name || "Customer";
+        phone = user.phone || "-";
+      }
+    }
+
+    // Get address details
+    if(order.address_id){
+
+      const { data: address } = await supabaseClient
+        .from("addresses")
+        .select("recipient_name, phone, address, city, pincode")
+        .eq("id", order.address_id)
+        .maybeSingle();
+
+      if(address){
+
+        if(customerName === "Customer"){
+          customerName =
+            address.recipient_name || "Customer";
+        }
+
+        if(phone === "-"){
+          phone =
+            address.phone || "-";
+        }
+
+        fullAddress = `
+          ${address.address || ""}
+          ${address.city || ""}
+          ${address.pincode || ""}
+        `.trim();
+
+        if(!fullAddress){
+          fullAddress = "-";
+        }
+      }
+    }
 
     const status = order.status || "PENDING";
 
-    const customerName =
-      order.users?.name ||
-      order.addresses?.recipient_name ||
-      "Customer";
-
-    const phone =
-      order.users?.phone ||
-      order.addresses?.phone ||
-      "-";
-
-    const fullAddress = `
-      ${order.addresses?.address || ""}
-      ${order.addresses?.city || ""}
-      ${order.addresses?.pincode || ""}
-    `.trim() || "-";
+    const row = document.createElement("tr");
 
     row.innerHTML = `
       <td>
@@ -431,11 +453,9 @@ async function loadOrders(){
     `;
 
     tbody.appendChild(row);
-
-  });
+  }
 
     }
-
 async function updateOrderStatus(orderId, newStatus){
 
   const confirmChange = confirm(
