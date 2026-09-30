@@ -587,13 +587,91 @@ let customers = [];
         </p>
 
         <p>
-          <strong>Prescription:</strong><br>
-          ${
-            order.prescription_id
-              ? "Prescription attached to this order."
-              : "No prescription attached."
-          }
-        </p>
+  <strong>Prescription:</strong><br>
+
+  ${
+    order.prescription_id
+      ? `
+        <button
+          onclick="viewPrescription('${order.prescription_id}')"
+          style="
+            background:#087f5b;
+            color:white;
+            border:0;
+            padding:9px 14px;
+            border-radius:7px;
+            cursor:pointer;
+            font-weight:bold;
+          ">
+          📄 View Prescription
+        </button>
+      `
+      : "No prescription attached."
+  }
+
+</p>
+
+async function viewPrescription(prescriptionId){
+
+  const { data: prescription, error } =
+    await supabaseClient
+      .from("prescriptions")
+      .select("id, private_file_key, status")
+      .eq("id", prescriptionId)
+      .single();
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Prescription load nahi ho paayi.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  if(!prescription || !prescription.private_file_key){
+
+    alert("Prescription file nahi mili.");
+
+    return;
+  }
+
+  const { data: signedData, error: signedError } =
+    await supabaseClient
+      .storage
+      .from("prescriptions")
+      .createSignedUrl(
+        prescription.private_file_key,
+        300
+      );
+
+  if(signedError){
+
+    console.error(signedError);
+
+    alert(
+      "Prescription open nahi ho paayi.\n\n" +
+      signedError.message
+    );
+
+    return;
+  }
+
+  if(!signedData || !signedData.signedUrl){
+
+    alert("Prescription URL generate nahi ho paaya.");
+
+    return;
+  }
+
+  window.open(
+    signedData.signedUrl,
+    "_blank"
+  );
+}
 
       </div>
 
