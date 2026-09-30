@@ -667,12 +667,6 @@ async function viewPrescription(prescriptionId){
     return;
   }
 
-  window.open(
-    signedData.signedUrl,
-    "_blank"
-  );
-}
-
       </div>
 
     </div>
@@ -680,6 +674,67 @@ async function viewPrescription(prescriptionId){
 
   document.body.appendChild(detailsBox);
              }
+    async function viewPrescription(prescriptionId){
+
+  const { data: prescription, error } =
+    await supabaseClient
+      .from("prescriptions")
+      .select("id, private_file_key, status")
+      .eq("id", prescriptionId)
+      .single();
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Prescription load nahi ho paayi.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  if(!prescription || !prescription.private_file_key){
+
+    alert("Prescription file nahi mili.");
+
+    return;
+  }
+
+  const { data: signedData, error: signedError } =
+    await supabaseClient
+      .storage
+      .from("prescriptions")
+      .createSignedUrl(
+        prescription.private_file_key,
+        300
+      );
+
+  if(signedError){
+
+    console.error(signedError);
+
+    alert(
+      "Prescription open nahi ho paayi.\n\n" +
+      signedError.message
+    );
+
+    return;
+  }
+
+  if(!signedData || !signedData.signedUrl){
+
+    alert("Prescription URL generate nahi ho paaya.");
+
+    return;
+  }
+
+  window.open(
+    signedData.signedUrl,
+    "_blank"
+  );
+    }
 /* =========================
    LOAD CUSTOMERS
 ========================= */
