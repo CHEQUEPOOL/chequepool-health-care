@@ -181,6 +181,7 @@ th{
   <th>Name</th>
   <th>Phone</th>
   <th>Total Orders</th>
+  <th>Action</th>
       </tr>
     </thead>
 
@@ -207,6 +208,59 @@ const supabaseClient =
 
 let customers = [];
 
+   async function viewCustomerOrders(customerId){
+
+  const { data: orders, error } =
+    await supabaseClient
+      .from("orders")
+      .select("id, total, status, order_status, payment_status, created_at")
+      .eq("user_id", customerId)
+      .order("created_at", { ascending:false });
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Orders load nahi ho paaye.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  if(!orders || orders.length === 0){
+
+    alert("Is customer ka koi order nahi mila.");
+
+    return;
+  }
+
+  let message =
+    "📦 CUSTOMER ORDERS\n\n";
+
+  orders.forEach(function(order, index){
+
+    const date =
+      new Date(order.created_at).toLocaleString("en-IN");
+
+    const status =
+      order.status ||
+      order.order_status ||
+      "PENDING";
+
+    message +=
+      (index + 1) + ". " +
+      "₹" + (order.total || 0) +
+      " | " + status +
+      "\n" +
+      date +
+      "\n\n";
+
+  });
+
+  alert(message);
+   } 
 
 /* =========================
    LOAD CUSTOMERS
@@ -361,7 +415,13 @@ function displayCustomers(){
   <td>
     ${customer.totalOrders || 0}
   </td>
-
+  
+<td>
+  <button
+    onclick="viewCustomerOrders('${customer.id}')">
+    View Orders
+  </button>
+</td>
 `;
 
 
