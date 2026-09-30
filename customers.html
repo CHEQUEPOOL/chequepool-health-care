@@ -213,7 +213,9 @@ let customers = [];
   const { data: orders, error } =
     await supabaseClient
       .from("orders")
-      .select("id, total, status, order_status, payment_status, created_at")
+      .select(
+        "id, total, status, order_status, payment_status, created_at"
+      )
       .eq("user_id", customerId)
       .order("created_at", { ascending:false });
 
@@ -236,31 +238,166 @@ let customers = [];
     return;
   }
 
-  let message =
-    "📦 CUSTOMER ORDERS\n\n";
+  // Old popup remove if already open
+  const oldBox =
+    document.getElementById("customerOrdersBox");
+
+  if(oldBox){
+    oldBox.remove();
+  }
+
+  // Main box
+  const box =
+    document.createElement("div");
+
+  box.id = "customerOrdersBox";
+
+  box.style.position = "fixed";
+  box.style.top = "0";
+  box.style.left = "0";
+  box.style.width = "100%";
+  box.style.height = "100%";
+  box.style.background = "rgba(0,0,0,0.55)";
+  box.style.zIndex = "9999";
+  box.style.padding = "20px";
+  box.style.overflowY = "auto";
+
+  let html = `
+    <div style="
+      max-width:900px;
+      margin:30px auto;
+      background:white;
+      border-radius:12px;
+      padding:20px;
+      box-shadow:0 5px 25px rgba(0,0,0,0.3);
+    ">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+      ">
+
+        <h2 style="margin:0;">
+          📦 Customer Orders
+        </h2>
+
+        <button
+          onclick="document.getElementById('customerOrdersBox').remove()"
+          style="
+            padding:8px 14px;
+            border:0;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:16px;
+          ">
+          ✕ Close
+        </button>
+
+      </div>
+
+      <div style="overflow-x:auto;">
+
+        <table style="
+          width:100%;
+          border-collapse:collapse;
+        ">
+
+          <thead>
+
+            <tr style="
+              background:#087f5b;
+              color:white;
+            ">
+
+              <th style="padding:10px;">#</th>
+              <th style="padding:10px;">Date</th>
+              <th style="padding:10px;">Total</th>
+              <th style="padding:10px;">Status</th>
+              <th style="padding:10px;">Payment</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+  `;
 
   orders.forEach(function(order, index){
 
     const date =
-      new Date(order.created_at).toLocaleString("en-IN");
+      new Date(order.created_at)
+        .toLocaleString("en-IN");
 
     const status =
       order.status ||
       order.order_status ||
       "PENDING";
 
-    message +=
-      (index + 1) + ". " +
-      "₹" + (order.total || 0) +
-      " | " + status +
-      "\n" +
-      date +
-      "\n\n";
+    const payment =
+      order.payment_status ||
+      "PENDING";
+
+    html += `
+      <tr>
+
+        <td style="
+          padding:10px;
+          border-bottom:1px solid #ddd;
+          text-align:center;
+        ">
+          ${index + 1}
+        </td>
+
+        <td style="
+          padding:10px;
+          border-bottom:1px solid #ddd;
+        ">
+          ${date}
+        </td>
+
+        <td style="
+          padding:10px;
+          border-bottom:1px solid #ddd;
+          font-weight:bold;
+        ">
+          ₹${order.total || 0}
+        </td>
+
+        <td style="
+          padding:10px;
+          border-bottom:1px solid #ddd;
+        ">
+          ${status}
+        </td>
+
+        <td style="
+          padding:10px;
+          border-bottom:1px solid #ddd;
+        ">
+          ${payment}
+        </td>
+
+      </tr>
+    `;
 
   });
 
-  alert(message);
-   } 
+  html += `
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+  `;
+
+  box.innerHTML = html;
+
+  document.body.appendChild(box);
+  }
 
 /* =========================
    LOAD CUSTOMERS
