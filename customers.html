@@ -178,8 +178,9 @@ th{
 
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Phone</th>
+  <th>Name</th>
+  <th>Phone</th>
+  <th>Total Orders</th>
       </tr>
     </thead>
 
@@ -217,39 +218,78 @@ async function loadCustomers(){
     document.getElementById("customerList");
 
   list.innerHTML =
-    '<tr><td colspan="2" class="empty">Loading customers...</td></tr>';
+    '<tr><td colspan="3" class="empty">Loading customers...</td></tr>';
 
-
-  const { data, error } =
+  // Customers load
+  const { data: customerData, error: customerError } =
     await supabaseClient
       .from("users")
       .select("id, name, phone")
       .order("name", { ascending:true });
 
+  if(customerError){
 
-  if(error){
-
-    console.error(error);
+    console.error(customerError);
 
     list.innerHTML =
-      '<tr><td colspan="2" class="empty">' +
+      '<tr><td colspan="3" class="empty">' +
       'Customers load nahi ho paaye.' +
       '</td></tr>';
 
     alert(
       "Customers load nahi ho paaye.\n\n" +
-      error.message
+      customerError.message
     );
 
     return;
   }
 
+  // Orders load
+  const { data: orderData, error: orderError } =
+    await supabaseClient
+      .from("orders")
+      .select("user_id");
 
-  customers = data || [];
+  if(orderError){
+
+    console.error(orderError);
+
+    alert(
+      "Orders count load nahi ho paaya.\n\n" +
+      orderError.message
+    );
+
+    return;
+  }
+
+  // Har customer ke orders count karna
+  const orderCounts = {};
+
+  (orderData || []).forEach(function(order){
+
+    if(order.user_id){
+
+      orderCounts[order.user_id] =
+        (orderCounts[order.user_id] || 0) + 1;
+
+    }
+
+  });
+
+  // Customer ke saath totalOrders attach karna
+  customers =
+    (customerData || []).map(function(customer){
+
+      return {
+        ...customer,
+        totalOrders:
+          orderCounts[customer.id] || 0
+      };
+
+    });
 
   displayCustomers();
 }
-
 
 /* =========================
    DISPLAY CUSTOMERS
@@ -310,15 +350,19 @@ function displayCustomers(){
 
     row.innerHTML = `
 
-      <td>
-        ${escapeHtml(customer.name || "")}
-      </td>
+  <td>
+    ${escapeHtml(customer.name || "")}
+  </td>
 
-      <td>
-        ${escapeHtml(customer.phone || "")}
-      </td>
+  <td>
+    ${escapeHtml(customer.phone || "")}
+  </td>
 
-    `;
+  <td>
+    ${customer.totalOrders || 0}
+  </td>
+
+`;
 
 
     list.appendChild(row);
