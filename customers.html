@@ -208,13 +208,13 @@ const supabaseClient =
 
 let customers = [];
 
-   async function viewCustomerOrders(customerId){
+  async function viewCustomerOrders(customerId){
 
   const { data: orders, error } =
     await supabaseClient
       .from("orders")
       .select(
-        "id, total, status, order_status, payment_status, created_at"
+        "id, total, status, order_status, payment_status, created_at, address_id, prescription_id"
       )
       .eq("user_id", customerId)
       .order("created_at", { ascending:false });
@@ -238,7 +238,6 @@ let customers = [];
     return;
   }
 
-  // Old popup remove if already open
   const oldBox =
     document.getElementById("customerOrdersBox");
 
@@ -246,7 +245,6 @@ let customers = [];
     oldBox.remove();
   }
 
-  // Main box
   const box =
     document.createElement("div");
 
@@ -264,7 +262,7 @@ let customers = [];
 
   let html = `
     <div style="
-      max-width:900px;
+      max-width:1000px;
       margin:30px auto;
       background:white;
       border-radius:12px;
@@ -316,6 +314,7 @@ let customers = [];
               <th style="padding:10px;">Total</th>
               <th style="padding:10px;">Status</th>
               <th style="padding:10px;">Payment</th>
+              <th style="padding:10px;">Action</th>
 
             </tr>
 
@@ -379,6 +378,27 @@ let customers = [];
           ${payment}
         </td>
 
+        <td style="
+          padding:10px;
+          border-bottom:1px solid #ddd;
+        ">
+
+          <button
+            onclick="viewOrderDetails('${order.id}')"
+            style="
+              background:#087f5b;
+              color:white;
+              border:0;
+              padding:8px 12px;
+              border-radius:6px;
+              cursor:pointer;
+              font-weight:bold;
+            ">
+            🔎 Details
+          </button>
+
+        </td>
+
       </tr>
     `;
 
@@ -397,8 +417,191 @@ let customers = [];
   box.innerHTML = html;
 
   document.body.appendChild(box);
+    }
+
+    async function viewOrderDetails(orderId){
+
+  const { data: order, error } =
+    await supabaseClient
+      .from("orders")
+      .select(`
+        id,
+        user_id,
+        address_id,
+        prescription_id,
+        total,
+        total_amount,
+        status,
+        order_status,
+        payment_status,
+        created_at
+      `)
+      .eq("id", orderId)
+      .single();
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Order details load nahi ho paaye.\n\n" +
+      error.message
+    );
+
+    return;
   }
 
+  let addressText = "Address information not available.";
+
+  if(order.address_id){
+
+    const { data: address, error: addressError } =
+      await supabaseClient
+        .from("addresses")
+        .select(
+          "recipient_name, phone, address, city, pincode"
+        )
+        .eq("id", order.address_id)
+        .maybeSingle();
+
+    if(!addressError && address){
+
+      addressText = `
+        <strong>${escapeHtml(address.recipient_name || "")}</strong><br>
+        ${escapeHtml(address.phone || "")}<br>
+        ${escapeHtml(address.address || "")}<br>
+        ${escapeHtml(address.city || "")}
+        - ${escapeHtml(address.pincode || "")}
+      `;
+    }
+  }
+
+  const date =
+    new Date(order.created_at)
+      .toLocaleString("en-IN");
+
+  const status =
+    order.status ||
+    order.order_status ||
+    "PENDING";
+
+  const payment =
+    order.payment_status ||
+    "PENDING";
+
+  const oldDetails =
+    document.getElementById("orderDetailsBox");
+
+  if(oldDetails){
+    oldDetails.remove();
+  }
+
+  const detailsBox =
+    document.createElement("div");
+
+  detailsBox.id = "orderDetailsBox";
+
+  detailsBox.style.position = "fixed";
+  detailsBox.style.top = "0";
+  detailsBox.style.left = "0";
+  detailsBox.style.width = "100%";
+  detailsBox.style.height = "100%";
+  detailsBox.style.background = "rgba(0,0,0,0.6)";
+  detailsBox.style.zIndex = "10000";
+  detailsBox.style.padding = "20px";
+  detailsBox.style.overflowY = "auto";
+
+  detailsBox.innerHTML = `
+
+    <div style="
+      max-width:600px;
+      margin:40px auto;
+      background:white;
+      border-radius:12px;
+      padding:22px;
+      box-shadow:0 5px 25px rgba(0,0,0,0.3);
+    ">
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+      ">
+
+        <h2 style="margin:0;">
+          📋 Order Details
+        </h2>
+
+        <button
+          onclick="document.getElementById('orderDetailsBox').remove()"
+          style="
+            padding:8px 14px;
+            border:0;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:16px;
+          ">
+          ✕ Close
+        </button>
+
+      </div>
+
+      <div style="
+        background:#f4f7f9;
+        padding:15px;
+        border-radius:10px;
+        line-height:1.8;
+      ">
+
+        <p>
+          <strong>Order ID:</strong><br>
+          ${escapeHtml(order.id)}
+        </p>
+
+        <p>
+          <strong>Date:</strong><br>
+          ${escapeHtml(date)}
+        </p>
+
+        <p>
+          <strong>Total:</strong><br>
+          <span style="font-size:20px;font-weight:bold;">
+            ₹${order.total || 0}
+          </span>
+        </p>
+
+        <p>
+          <strong>Order Status:</strong><br>
+          ${escapeHtml(status)}
+        </p>
+
+        <p>
+          <strong>Payment Status:</strong><br>
+          ${escapeHtml(payment)}
+        </p>
+
+        <p>
+          <strong>Delivery Address:</strong><br>
+          ${addressText}
+        </p>
+
+        <p>
+          <strong>Prescription:</strong><br>
+          ${
+            order.prescription_id
+              ? "Prescription attached to this order."
+              : "No prescription attached."
+          }
+        </p>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(detailsBox);
+             }
 /* =========================
    LOAD CUSTOMERS
 ========================= */
