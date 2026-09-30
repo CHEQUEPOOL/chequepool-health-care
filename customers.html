@@ -1,14 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Customers - Cheque Pool Health Care</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Customers - Cheque Pool Health Care</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
 *{
   box-sizing:border-box;
 }
@@ -41,6 +34,7 @@ body{
   padding:9px 14px;
   border-radius:8px;
   font-weight:bold;
+  cursor:pointer;
 }
 
 .container{
@@ -58,12 +52,16 @@ h1{
   margin-top:0;
 }
 
-.search{
+.card{
   margin-top:25px;
   background:white;
   padding:20px;
   border-radius:12px;
   box-shadow:0 2px 8px #0001;
+}
+
+.card h2{
+  margin-top:0;
 }
 
 input{
@@ -72,6 +70,21 @@ input{
   border:1px solid #ccc;
   border-radius:8px;
   font-size:15px;
+}
+
+.add-btn{
+  background:#087f5b;
+  color:white;
+  border:0;
+  padding:11px 18px;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.add-btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
 }
 
 table{
@@ -97,6 +110,11 @@ th{
   color:#777;
 }
 
+.status{
+  margin-top:12px;
+  font-weight:bold;
+}
+
 @media(max-width:700px){
 
   table{
@@ -111,99 +129,67 @@ th{
     font-size:16px;
   }
 }
-</style>
-</head>
-
-<body>
-
-<header class="header">
-
-  <h2>👥 CHEQUE POOL HEALTH CARE</h2>
-
-  <button class="back" onclick="location.href='admin.html'">
+</style></head><body><header class="header">  <h2>👥 CHEQUE POOL HEALTH CARE</h2>  <button class="back" onclick="location.href='admin.html'">
     ← Admin
-  </button>
-
-</header>
-
-<main class="container">
-
-  <h1>👥 Customers</h1>
-
-  <p class="subtitle">
+  </button></header><main class="container">  <h1>👥 Customers</h1>  <p class="subtitle">
     Manage your medical shop customers.
-  </p>
-<section class="search">
+  </p>  <!-- ADD CUSTOMER -->  <section class="card"><h2>➕ Add Customer</h2>
 
-  <h2>➕ Add Customer</h2>
+<input
+  id="customerName"
+  type="text"
+  placeholder="Customer name"
+>
 
-  <input
-    id="customerName"
-    type="text"
-    placeholder="Customer name"
-  >
+<br><br>
 
-  <br><br>
-  
-  <input
-    id="customerPhone"
-    type="text"
-    placeholder="Phone number"
-  >
+<input
+  id="customerPhone"
+  type="tel"
+  inputmode="numeric"
+  maxlength="10"
+  placeholder="10 digit phone number"
+>
 
-  <br><br>
+<br><br>
 
-  <button
-    onclick="addCustomer()"
-    style="
-      background:#087f5b;
-      color:white;
-      border:0;
-      padding:11px 18px;
-      border-radius:8px;
-      font-weight:bold;
-      cursor:pointer;
-    "
-  >
-    ➕ Add Customer
-  </button>
+<button
+  id="addCustomerBtn"
+  class="add-btn"
+  onclick="addCustomer()"
+>
+  ➕ Add Customer
+</button>
 
-</section>
-  <section class="search">
+<div id="addStatus" class="status"></div>
 
-    <h2>🔍 Customer List</h2>
+  </section>  <!-- CUSTOMER LIST -->  <section class="card"><h2>🔍 Customer List</h2>
 
-    <input
-      id="search"
-      type="text"
-      placeholder="Search customer by name or phone..."
-      oninput="displayCustomers()"
-    >
+<input
+  id="search"
+  type="text"
+  placeholder="Search customer by name or phone..."
+  oninput="displayCustomers()"
+>
 
-    <div style="overflow-x:auto;">
+<div style="overflow-x:auto;">
 
-      <table>
+  <table>
 
-        <thead>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+      </tr>
+    </thead>
 
-          <tr>
-            <th>Name</th>
-            <th>Phone</th>
-          </tr>
+    <tbody id="customerList"></tbody>
 
-        </thead>
+  </table>
 
-        <tbody id="customerList"></tbody>
+</div>
 
-      </table>
-
-    </div>
-
-  </section>
-
-</main>
-
-<script>
+  </section></main><script>
 
 const SUPABASE_URL =
   "https://ymhaxeferrpyhuavzcgu.supabase.co";
@@ -221,9 +207,18 @@ const supabaseClient =
 let customers = [];
 
 
-/* LOAD CUSTOMERS */
+/* =========================
+   LOAD CUSTOMERS
+========================= */
 
 async function loadCustomers(){
+
+  const list =
+    document.getElementById("customerList");
+
+  list.innerHTML =
+    '<tr><td colspan="2" class="empty">Loading customers...</td></tr>';
+
 
   const { data, error } =
     await supabaseClient
@@ -231,9 +226,15 @@ async function loadCustomers(){
       .select("id, name, phone")
       .order("name", { ascending:true });
 
+
   if(error){
 
     console.error(error);
+
+    list.innerHTML =
+      '<tr><td colspan="2" class="empty">' +
+      'Customers load nahi ho paaye.' +
+      '</td></tr>';
 
     alert(
       "Customers load nahi ho paaye.\n\n" +
@@ -243,13 +244,16 @@ async function loadCustomers(){
     return;
   }
 
+
   customers = data || [];
 
   displayCustomers();
 }
 
 
-/* DISPLAY CUSTOMERS */
+/* =========================
+   DISPLAY CUSTOMERS
+========================= */
 
 function displayCustomers(){
 
@@ -266,18 +270,17 @@ function displayCustomers(){
   const filtered =
     customers.filter(function(customer){
 
+      const name =
+        String(customer.name || "")
+          .toLowerCase();
+
+      const phone =
+        String(customer.phone || "")
+          .toLowerCase();
+
       return (
-
-        (customer.name || "")
-          .toLowerCase()
-          .includes(search)
-
-        ||
-
-        (customer.phone || "")
-          .toLowerCase()
-          .includes(search)
-
+        name.includes(search) ||
+        phone.includes(search)
       );
 
     });
@@ -307,9 +310,13 @@ function displayCustomers(){
 
     row.innerHTML = `
 
-      <td>${escapeHtml(customer.name || "")}</td>
+      <td>
+        ${escapeHtml(customer.name || "")}
+      </td>
 
-      <td>${escapeHtml(customer.phone || "")}</td>
+      <td>
+        ${escapeHtml(customer.phone || "")}
+      </td>
 
     `;
 
@@ -321,7 +328,169 @@ function displayCustomers(){
 }
 
 
-/* SECURITY */
+/* =========================
+   ADD CUSTOMER
+========================= */
+
+async function addCustomer(){
+
+  const name =
+    document
+      .getElementById("customerName")
+      .value
+      .trim();
+
+
+  const phone =
+    document
+      .getElementById("customerPhone")
+      .value
+      .trim();
+
+
+  const status =
+    document.getElementById("addStatus");
+
+
+  const button =
+    document.getElementById("addCustomerBtn");
+
+
+  status.innerText = "";
+
+
+  /* NAME CHECK */
+
+  if(!name){
+
+    alert("Please enter customer name.");
+
+    return;
+  }
+
+
+  /* PHONE CHECK */
+
+  if(phone && !/^[0-9]{10}$/.test(phone)){
+
+    alert(
+      "Please enter a valid 10 digit phone number."
+    );
+
+    return;
+  }
+
+
+  /* DUPLICATE PHONE CHECK */
+
+  if(phone){
+
+    const { data: existingCustomer, error: checkError } =
+      await supabaseClient
+        .from("users")
+        .select("id, name, phone")
+        .eq("phone", phone)
+        .limit(1);
+
+
+    if(checkError){
+
+      console.error(checkError);
+
+      alert(
+        "Customer check failed.\n\n" +
+        checkError.message
+      );
+
+      return;
+    }
+
+
+    if(existingCustomer && existingCustomer.length > 0){
+
+      alert(
+        "This phone number is already registered.\n\n" +
+        "Customer: " +
+        (existingCustomer[0].name || "Unknown")
+      );
+
+      return;
+    }
+
+  }
+
+
+  /* DISABLE BUTTON */
+
+  button.disabled = true;
+  button.innerText = "Adding...";
+
+
+  /* INSERT */
+
+  const { data, error } =
+    await supabaseClient
+      .from("users")
+      .insert([
+        {
+          name: name,
+          phone: phone || null
+        }
+      ])
+      .select()
+      .single();
+
+
+  if(error){
+
+    console.error(error);
+
+    button.disabled = false;
+    button.innerText = "➕ Add Customer";
+
+
+    alert(
+      "Customer add nahi ho paaya.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  /* SUCCESS */
+
+  status.innerText =
+    "✅ Customer added successfully.";
+
+
+  document.getElementById("customerName").value = "";
+  document.getElementById("customerPhone").value = "";
+
+
+  button.disabled = false;
+  button.innerText = "➕ Add Customer";
+
+
+  /* RELOAD LIST */
+
+  await loadCustomers();
+
+
+  /* CLEAR MESSAGE */
+
+  setTimeout(function(){
+
+    status.innerText = "";
+
+  },3000);
+
+}
+
+
+/* =========================
+   SECURITY
+========================= */
 
 function escapeHtml(text){
 
@@ -336,64 +505,15 @@ function escapeHtml(text){
     .replace(/"/g,"&quot;")
 
     .replace(/'/g,"&#039;");
+
 }
 
 
-/* START */
-async function addCustomer(){
+/* =========================
+   START
+========================= */
 
-  const name =
-    document.getElementById("customerName").value.trim();
-
-  const phone =
-    document.getElementById("customerPhone").value.trim();
-
-
-  if(!name){
-
-    alert("Please enter customer name.");
-
-    return;
-  }
-
-
-  const { data, error } =
-    await supabaseClient
-      .from("users")
-      .insert([
-        {
-          name: name,
-          phone: phone,
-        }
-      ])
-      .select();
-
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Customer add nahi ho paaya.\n\n" +
-      error.message
-    );
-
-    return;
-  }
-
-
-  alert("Customer added successfully.");
-
-
-  document.getElementById("customerName").value = "";
-  document.getElementById("customerPhone").value = "";
-  
-
-  loadCustomers();
-  }
 loadCustomers();
 
-</script>
-
-</body>
+</script></body>
 </html>
