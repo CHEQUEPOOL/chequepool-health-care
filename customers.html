@@ -419,7 +419,7 @@ let customers = [];
   document.body.appendChild(box);
     }
 
-    async function viewOrderDetails(orderId){
+  async function viewOrderDetails(orderId){
 
   const { data: order, error } =
     await supabaseClient
@@ -451,7 +451,8 @@ let customers = [];
     return;
   }
 
-  let addressText = "Address information not available.";
+  let addressText =
+    "Address information not available.";
 
   if(order.address_id){
 
@@ -587,29 +588,42 @@ let customers = [];
         </p>
 
         <p>
-  <strong>Prescription:</strong><br>
+          <strong>Prescription:</strong><br>
 
-  ${
-    order.prescription_id
-      ? `
-        <button
-          onclick="viewPrescription('${order.prescription_id}')"
-          style="
-            background:#087f5b;
-            color:white;
-            border:0;
-            padding:9px 14px;
-            border-radius:7px;
-            cursor:pointer;
-            font-weight:bold;
-          ">
-          📄 View Prescription
-        </button>
-      `
-      : "No prescription attached."
-  }
+          ${
+            order.prescription_id
+              ? `
+                <button
+                  onclick="viewPrescription('${order.prescription_id}')"
+                  style="
+                    background:#087f5b;
+                    color:white;
+                    border:0;
+                    padding:9px 14px;
+                    border-radius:7px;
+                    cursor:pointer;
+                    font-weight:bold;
+                  ">
+                  📄 View Prescription
+                </button>
+              `
+              : "No prescription attached."
+          }
 
-</p>
+        </p>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(detailsBox);
+}
+
+
+/* =========================
+   VIEW PRESCRIPTION
+========================= */
 
 async function viewPrescription(prescriptionId){
 
@@ -632,7 +646,10 @@ async function viewPrescription(prescriptionId){
     return;
   }
 
-  if(!prescription || !prescription.private_file_key){
+  if(
+    !prescription ||
+    !prescription.private_file_key
+  ){
 
     alert("Prescription file nahi mili.");
 
@@ -660,72 +677,14 @@ async function viewPrescription(prescriptionId){
     return;
   }
 
-  if(!signedData || !signedData.signedUrl){
-
-    alert("Prescription URL generate nahi ho paaya.");
-
-    return;
-  }
-
-      </div>
-
-    </div>
-  `;
-
-  document.body.appendChild(detailsBox);
-             }
-    async function viewPrescription(prescriptionId){
-
-  const { data: prescription, error } =
-    await supabaseClient
-      .from("prescriptions")
-      .select("id, private_file_key, status")
-      .eq("id", prescriptionId)
-      .single();
-
-  if(error){
-
-    console.error(error);
+  if(
+    !signedData ||
+    !signedData.signedUrl
+  ){
 
     alert(
-      "Prescription load nahi ho paayi.\n\n" +
-      error.message
+      "Prescription URL generate nahi ho paaya."
     );
-
-    return;
-  }
-
-  if(!prescription || !prescription.private_file_key){
-
-    alert("Prescription file nahi mili.");
-
-    return;
-  }
-
-  const { data: signedData, error: signedError } =
-    await supabaseClient
-      .storage
-      .from("prescriptions")
-      .createSignedUrl(
-        prescription.private_file_key,
-        300
-      );
-
-  if(signedError){
-
-    console.error(signedError);
-
-    alert(
-      "Prescription open nahi ho paayi.\n\n" +
-      signedError.message
-    );
-
-    return;
-  }
-
-  if(!signedData || !signedData.signedUrl){
-
-    alert("Prescription URL generate nahi ho paaya.");
 
     return;
   }
@@ -734,10 +693,13 @@ async function viewPrescription(prescriptionId){
     signedData.signedUrl,
     "_blank"
   );
-    }
+}
+
+
 /* =========================
    LOAD CUSTOMERS
 ========================= */
+
 
 async function loadCustomers(){
 
