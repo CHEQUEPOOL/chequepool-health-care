@@ -451,6 +451,11 @@ let customers = [];
     return;
   }
 
+
+  /* ================================
+     DELIVERY ADDRESS
+  ================================= */
+
   let addressText =
     "Address information not available.";
 
@@ -477,6 +482,232 @@ let customers = [];
     }
   }
 
+
+  /* ================================
+     ORDER MEDICINES
+  ================================= */
+
+  const {
+    data: orderItems,
+    error: orderItemsError
+  } = await supabaseClient
+    .from("order_items")
+    .select(
+      "id, medicine_id, quantity, unit_price"
+    )
+    .eq("order_id", orderId);
+
+  if(orderItemsError){
+
+    console.error(
+      "Order items error:",
+      orderItemsError
+    );
+  }
+
+
+  let medicineMap = {};
+
+  if(orderItems && orderItems.length > 0){
+
+    const medicineIds = [
+      ...new Set(
+        orderItems
+          .map(item => item.medicine_id)
+          .filter(Boolean)
+      )
+    ];
+
+    if(medicineIds.length > 0){
+
+      const {
+        data: medicines,
+        error: medicinesError
+      } = await supabaseClient
+        .from("medicines")
+        .select("id, name")
+        .in("id", medicineIds);
+
+      if(medicinesError){
+
+        console.error(
+          "Medicine load error:",
+          medicinesError
+        );
+
+      }else if(medicines){
+
+        medicineMap =
+          Object.fromEntries(
+            medicines.map(medicine => [
+              medicine.id,
+              medicine.name
+            ])
+          );
+      }
+    }
+  }
+
+
+  /* ================================
+     MEDICINE HTML
+  ================================= */
+
+  let medicinesHtml = "";
+
+  if(orderItems && orderItems.length > 0){
+
+    medicinesHtml = `
+      <div style="
+        margin-top:20px;
+        background:white;
+        padding:15px;
+        border-radius:10px;
+        border:1px solid #ddd;
+      ">
+
+        <h3 style="
+          margin-top:0;
+          margin-bottom:12px;
+        ">
+          💊 Order Medicines
+        </h3>
+
+        <div style="overflow-x:auto;">
+
+          <table style="
+            width:100%;
+            border-collapse:collapse;
+            font-size:14px;
+          ">
+
+            <thead>
+
+              <tr style="background:#f1f3f5;">
+
+                <th style="
+                  padding:10px;
+                  border:1px solid #ddd;
+                  text-align:left;
+                ">
+                  Medicine
+                </th>
+
+                <th style="
+                  padding:10px;
+                  border:1px solid #ddd;
+                  text-align:center;
+                ">
+                  Qty
+                </th>
+
+                <th style="
+                  padding:10px;
+                  border:1px solid #ddd;
+                  text-align:right;
+                ">
+                  Price
+                </th>
+
+                <th style="
+                  padding:10px;
+                  border:1px solid #ddd;
+                  text-align:right;
+                ">
+                  Subtotal
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              ${orderItems.map(item => {
+
+                const medicineName =
+                  medicineMap[item.medicine_id] ||
+                  "Medicine not found";
+
+                const quantity =
+                  Number(item.quantity || 0);
+
+                const unitPrice =
+                  Number(item.unit_price || 0);
+
+                const subtotal =
+                  quantity * unitPrice;
+
+                return `
+
+                  <tr>
+
+                    <td style="
+                      padding:10px;
+                      border:1px solid #ddd;
+                    ">
+                      ${escapeHtml(medicineName)}
+                    </td>
+
+                    <td style="
+                      padding:10px;
+                      border:1px solid #ddd;
+                      text-align:center;
+                    ">
+                      ${quantity}
+                    </td>
+
+                    <td style="
+                      padding:10px;
+                      border:1px solid #ddd;
+                      text-align:right;
+                    ">
+                      ₹${unitPrice}
+                    </td>
+
+                    <td style="
+                      padding:10px;
+                      border:1px solid #ddd;
+                      text-align:right;
+                      font-weight:bold;
+                    ">
+                      ₹${subtotal}
+                    </td>
+
+                  </tr>
+
+                `;
+
+              }).join("")}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+    `;
+
+  }else{
+
+    medicinesHtml = `
+      <div style="
+        margin-top:20px;
+        background:#fff3cd;
+        padding:12px;
+        border-radius:8px;
+      ">
+        💊 No medicines found for this order.
+      </div>
+    `;
+  }
+
+
+  /* ================================
+     DATE / STATUS
+  ================================= */
+
   const date =
     new Date(order.created_at)
       .toLocaleString("en-IN");
@@ -490,12 +721,22 @@ let customers = [];
     order.payment_status ||
     "PENDING";
 
+
+  /* ================================
+     REMOVE OLD DETAILS
+  ================================= */
+
   const oldDetails =
     document.getElementById("orderDetailsBox");
 
   if(oldDetails){
     oldDetails.remove();
   }
+
+
+  /* ================================
+     CREATE DETAILS BOX
+  ================================= */
 
   const detailsBox =
     document.createElement("div");
@@ -507,10 +748,16 @@ let customers = [];
   detailsBox.style.left = "0";
   detailsBox.style.width = "100%";
   detailsBox.style.height = "100%";
-  detailsBox.style.background = "rgba(0,0,0,0.6)";
+  detailsBox.style.background =
+    "rgba(0,0,0,0.6)";
   detailsBox.style.zIndex = "10000";
   detailsBox.style.padding = "20px";
   detailsBox.style.overflowY = "auto";
+
+
+  /* ================================
+     DETAILS HTML
+  ================================= */
 
   detailsBox.innerHTML = `
 
@@ -522,6 +769,7 @@ let customers = [];
       padding:22px;
       box-shadow:0 5px 25px rgba(0,0,0,0.3);
     ">
+
 
       <div style="
         display:flex;
@@ -535,18 +783,24 @@ let customers = [];
         </h2>
 
         <button
-          onclick="document.getElementById('orderDetailsBox').remove()"
+          onclick="
+            document
+              .getElementById('orderDetailsBox')
+              .remove()
+          "
           style="
             padding:8px 14px;
             border:0;
             border-radius:6px;
             cursor:pointer;
             font-size:16px;
-          ">
+          "
+        >
           ✕ Close
         </button>
 
       </div>
+
 
       <div style="
         background:#f4f7f9;
@@ -555,137 +809,161 @@ let customers = [];
         line-height:1.8;
       ">
 
+
         <p>
           <strong>Order ID:</strong><br>
           ${escapeHtml(order.id)}
         </p>
+
 
         <p>
           <strong>Date:</strong><br>
           ${escapeHtml(date)}
         </p>
 
+
         <p>
           <strong>Total:</strong><br>
-          <span style="font-size:20px;font-weight:bold;">
+
+          <span style="
+            font-size:20px;
+            font-weight:bold;
+          ">
             ₹${order.total || 0}
           </span>
         </p>
 
-        <p>
-  <strong>Order Status:</strong><br>
 
-  <select
-    id="orderStatusSelect"
-    style="
-      width:100%;
-      padding:10px;
-      border:1px solid #ccc;
-      border-radius:7px;
-      font-size:15px;
-      margin-top:5px;
-    "
-  >
-
-    <option value="PENDING"
-      ${status === "PENDING" ? "selected" : ""}>
-      PENDING
-    </option>
-
-    <option value="APPROVED"
-      ${status === "APPROVED" ? "selected" : ""}>
-      APPROVED
-    </option>
-
-    <option value="REJECTED"
-      ${status === "REJECTED" ? "selected" : ""}>
-      REJECTED
-    </option>
+        ${medicinesHtml}
 
 
-  </select>
+        <p style="margin-top:20px;">
+          <strong>Order Status:</strong><br>
 
-  <button
-    onclick="updateOrderStatus('${order.id}')"
-    style="
-      margin-top:10px;
-      background:#087f5b;
-      color:white;
-      border:0;
-      padding:9px 14px;
-      border-radius:7px;
-      cursor:pointer;
-      font-weight:bold;
-    "
-  >
-    💾 Update Status
-  </button>
+          <select
+            id="orderStatusSelect"
+            style="
+              width:100%;
+              padding:10px;
+              border:1px solid #ccc;
+              border-radius:7px;
+              font-size:15px;
+              margin-top:5px;
+            "
+          >
 
-</p>
+            <option value="PENDING"
+              ${status === "PENDING" ? "selected" : ""}>
+              PENDING
+            </option>
 
-        <p>
-  <strong>Payment Status:</strong><br>
+            <option value="APPROVED"
+              ${status === "APPROVED" ? "selected" : ""}>
+              APPROVED
+            </option>
 
-  <select
-    id="paymentStatusSelect"
-    style="
-      width:100%;
-      padding:10px;
-      border:1px solid #ccc;
-      border-radius:7px;
-      font-size:15px;
-      margin-top:5px;
-    "
-  >
+            <option value="REJECTED"
+              ${status === "REJECTED" ? "selected" : ""}>
+              REJECTED
+            </option>
 
-    <option value="PENDING"
-      ${payment === "PENDING" ? "selected" : ""}>
-      PENDING
-    </option>
+          </select>
 
-    <option value="PAID"
-      ${payment === "PAID" ? "selected" : ""}>
-      PAID
-    </option>
 
-    <option value="FAILED"
-      ${payment === "FAILED" ? "selected" : ""}>
-      FAILED
-    </option>
+          <button
+            onclick="updateOrderStatus('${order.id}')"
+            style="
+              margin-top:10px;
+              background:#087f5b;
+              color:white;
+              border:0;
+              padding:9px 14px;
+              border-radius:7px;
+              cursor:pointer;
+              font-weight:bold;
+            "
+          >
+            💾 Update Status
+          </button>
 
-  </select>
-
-  <button
-    onclick="updatePaymentStatus('${order.id}')"
-    style="
-      margin-top:10px;
-      background:#087f5b;
-      color:white;
-      border:0;
-      padding:9px 14px;
-      border-radius:7px;
-      cursor:pointer;
-      font-weight:bold;
-    "
-  >
-    💳 Update Payment
-  </button>
-
-</p>
-
-        <p>
-          <strong>Delivery Address:</strong><br>
-          ${addressText}
         </p>
 
+
         <p>
+
+          <strong>Payment Status:</strong><br>
+
+          <select
+            id="paymentStatusSelect"
+            style="
+              width:100%;
+              padding:10px;
+              border:1px solid #ccc;
+              border-radius:7px;
+              font-size:15px;
+              margin-top:5px;
+            "
+          >
+
+            <option value="PENDING"
+              ${payment === "PENDING" ? "selected" : ""}>
+              PENDING
+            </option>
+
+            <option value="PAID"
+              ${payment === "PAID" ? "selected" : ""}>
+              PAID
+            </option>
+
+            <option value="FAILED"
+              ${payment === "FAILED" ? "selected" : ""}>
+              FAILED
+            </option>
+
+          </select>
+
+
+          <button
+            onclick="updatePaymentStatus('${order.id}')"
+            style="
+              margin-top:10px;
+              background:#087f5b;
+              color:white;
+              border:0;
+              padding:9px 14px;
+              border-radius:7px;
+              cursor:pointer;
+              font-weight:bold;
+            "
+          >
+            💳 Update Payment
+          </button>
+
+        </p>
+
+
+        <p>
+
+          <strong>Delivery Address:</strong><br>
+
+          ${addressText}
+
+        </p>
+
+
+        <p>
+
           <strong>Prescription:</strong><br>
 
           ${
             order.prescription_id
               ? `
                 <button
-                  onclick="viewPrescription('${order.prescription_id}')"
+                  onclick="
+                    viewPrescription(
+                      '${order.prescription_id}'
+                    )
+                  "
                   style="
                     background:#087f5b;
                     color:white;
@@ -694,7 +972,8 @@ let customers = [];
                     border-radius:7px;
                     cursor:pointer;
                     font-weight:bold;
-                  ">
+                  "
+                >
                   📄 View Prescription
                 </button>
               `
@@ -703,13 +982,16 @@ let customers = [];
 
         </p>
 
+
       </div>
 
     </div>
+
   `;
 
+
   document.body.appendChild(detailsBox);
-}
+  }
 
 /* =========================
    UPDATE ORDER STATUS
