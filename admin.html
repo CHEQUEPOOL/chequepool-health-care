@@ -543,7 +543,306 @@ function logout(){
     tbody.appendChild(row);
 
   }
+async function viewOrderDetails(orderId){
 
+  const { data: order, error: orderError } =
+    await supabaseClient
+      .from("orders")
+      .select(`
+        id,
+        user_id,
+        address_id,
+        prescription_id,
+        total,
+        total_amount,
+        status,
+        order_status,
+        payment_status,
+        created_at
+      `)
+      .eq("id", orderId)
+      .single();
+
+  if(orderError){
+
+    console.error(orderError);
+
+    alert(
+      "Order details load nahi ho paaye.\n\n" +
+      orderError.message
+    );
+
+    return;
+  }
+
+
+  /* CUSTOMER */
+
+  let customerName = "Customer";
+  let customerPhone = "-";
+
+  if(order.user_id){
+
+    const { data: user } =
+      await supabaseClient
+        .from("users")
+        .select("name, phone")
+        .eq("id", order.user_id)
+        .maybeSingle();
+
+    if(user){
+
+      customerName =
+        user.name || "Customer";
+
+      customerPhone =
+        user.phone || "-";
+
+    }
+
+  }
+
+
+  /* ADDRESS */
+
+  let deliveryAddress = "-";
+
+  if(order.address_id){
+
+    const { data: address } =
+      await supabaseClient
+        .from("addresses")
+        .select(
+          "recipient_name, phone, address, city, pincode"
+        )
+        .eq("id", order.address_id)
+        .maybeSingle();
+
+    if(address){
+
+      deliveryAddress = `
+        ${address.address || ""}
+        ${address.city || ""}
+        ${address.pincode || ""}
+      `.trim();
+
+    }
+
+  }
+
+
+  /* ORDER ITEMS */
+
+  const { data: items, error: itemsError } =
+    await supabaseClient
+      .from("order_items")
+      .select(
+        "id, medicine_id, quantity, unit_price"
+      )
+      .eq("order_id", orderId);
+
+  if(itemsError){
+
+    console.error(itemsError);
+
+    alert(
+      "Order medicines load nahi ho paayi.\n\n" +
+      itemsError.message
+    );
+
+    return;
+  }
+
+
+  let medicineRows = "";
+
+
+  if(items && items.length > 0){
+
+    for(const item of items){
+
+      let medicineName = "Medicine";
+
+      const { data: medicine } =
+        await supabaseClient
+          .from("medicines")
+          .select("name")
+          .eq("id", item.medicine_id)
+          .maybeSingle();
+
+      if(medicine){
+
+        medicineName =
+          medicine.name || "Medicine";
+
+      }
+
+
+      const itemTotal =
+        Number(item.quantity || 0) *
+        Number(item.unit_price || 0);
+
+
+      medicineRows += `
+        <tr>
+          <td>${medicineName}</td>
+          <td>${item.quantity}</td>
+          <td>₹${Number(item.unit_price || 0)}</td>
+          <td>₹${itemTotal}</td>
+        </tr>
+      `;
+
+    }
+
+  }else{
+
+    medicineRows = `
+      <tr>
+        <td colspan="4">
+          No medicines found
+        </td>
+      </tr>
+    `;
+
+  }
+
+
+  /* DETAILS BOX */
+
+  const oldBox =
+    document.getElementById("orderDetailsBox");
+
+  if(oldBox){
+    oldBox.remove();
+  }
+
+
+  const detailsBox =
+    document.createElement("div");
+
+  detailsBox.id =
+    "orderDetailsBox";
+
+  detailsBox.style = `
+    position:fixed;
+    top:5%;
+    left:5%;
+    width:90%;
+    max-height:90vh;
+    overflow:auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    z-index:9999;
+  `;
+
+
+  detailsBox.innerHTML = `
+
+    <h2>📦 Order Details</h2>
+
+    <p>
+      <b>Order ID:</b>
+      ${order.id}
+    </p>
+
+    <p>
+      <b>Date:</b>
+      ${new Date(order.created_at).toLocaleString()}
+    </p>
+
+    <hr>
+
+    <h3>Customer</h3>
+
+    <p>
+      <b>Name:</b> ${customerName}
+    </p>
+
+    <p>
+      <b>Phone:</b> ${customerPhone}
+    </p>
+
+    <h3>Delivery Address</h3>
+
+    <p>
+      ${deliveryAddress}
+    </p>
+
+    <h3>Medicines</h3>
+
+    <table style="width:100%; border-collapse:collapse;">
+
+      <thead>
+
+        <tr>
+
+          <th style="border:1px solid #ddd;padding:8px;">
+            Medicine
+          </th>
+
+          <th style="border:1px solid #ddd;padding:8px;">
+            Qty
+          </th>
+
+          <th style="border:1px solid #ddd;padding:8px;">
+            Price
+          </th>
+
+          <th style="border:1px solid #ddd;padding:8px;">
+            Total
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        ${medicineRows}
+
+      </tbody>
+
+    </table>
+
+    <h3>
+      Total:
+      ₹${Number(order.total || 0)}
+    </h3>
+
+    <p>
+      <b>Order Status:</b>
+      ${order.status || order.order_status || "PENDING"}
+    </p>
+
+    <p>
+      <b>Payment Status:</b>
+      ${order.payment_status || "PENDING"}
+    </p>
+
+    <br>
+
+    <button
+      onclick="document.getElementById('orderDetailsBox').remove()"
+      style="
+        background:#555;
+        color:white;
+        border:0;
+        padding:10px 18px;
+        border-radius:6px;
+        cursor:pointer;
+      "
+    >
+      Close
+    </button>
+
+  `;
+
+
+  document.body.appendChild(detailsBox);
+
+     }
            }
 
 loadOrders();
