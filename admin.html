@@ -317,26 +317,48 @@ function logout(){
     alert("Admin logout will be connected with secure login.");
 }
 
-async function loadOrders(){
+    async function loadOrders(){
 
   const { data: orders, error: ordersError } =
     await supabaseClient
       .from("orders")
-      .select("id, user_id, address_id, total, status, created_at")
+      .select(`
+        id,
+        user_id,
+        address_id,
+        total,
+        total_amount,
+        status,
+        order_status,
+        payment_status,
+        created_at
+      `)
       .order("created_at", { ascending: false })
       .limit(10);
 
+
   if(ordersError){
+
     console.error(ordersError);
-    alert("Orders load nahi ho paaye.\n\n" + ordersError.message);
+
+    alert(
+      "Orders load nahi ho paaye.\n\n" +
+      ordersError.message
+    );
+
     return;
   }
 
-  const tbody = document.getElementById("ordersTableBody");
+
+  const tbody =
+    document.getElementById("ordersTableBody");
+
 
   tbody.innerHTML = "";
 
+
   if(!orders || orders.length === 0){
+
     tbody.innerHTML = `
       <tr>
         <td colspan="6" style="text-align:center;">
@@ -344,8 +366,10 @@ async function loadOrders(){
         </td>
       </tr>
     `;
+
     return;
   }
+
 
   for(const order of orders){
 
@@ -353,41 +377,68 @@ async function loadOrders(){
     let phone = "-";
     let fullAddress = "-";
 
-    // Get customer details
+
+    /* =========================
+       CUSTOMER
+    ========================= */
+
     if(order.user_id){
 
-      const { data: user } = await supabaseClient
-        .from("users")
-        .select("name, phone")
-        .eq("id", order.user_id)
-        .maybeSingle();
+      const { data: user } =
+        await supabaseClient
+          .from("users")
+          .select("name, phone")
+          .eq("id", order.user_id)
+          .maybeSingle();
+
 
       if(user){
-        customerName = user.name || "Customer";
-        phone = user.phone || "-";
+
+        customerName =
+          user.name || "Customer";
+
+        phone =
+          user.phone || "-";
+
       }
+
     }
 
-    // Get address details
+
+    /* =========================
+       ADDRESS
+    ========================= */
+
     if(order.address_id){
 
-      const { data: address } = await supabaseClient
-        .from("addresses")
-        .select("recipient_name, phone, address, city, pincode")
-        .eq("id", order.address_id)
-        .maybeSingle();
+      const { data: address } =
+        await supabaseClient
+          .from("addresses")
+          .select(
+            "recipient_name, phone, address, city, pincode"
+          )
+          .eq("id", order.address_id)
+          .maybeSingle();
+
 
       if(address){
 
         if(customerName === "Customer"){
+
           customerName =
-            address.recipient_name || "Customer";
+            address.recipient_name ||
+            "Customer";
+
         }
 
+
         if(phone === "-"){
+
           phone =
             address.phone || "-";
+
         }
+
 
         fullAddress = `
           ${address.address || ""}
@@ -395,66 +446,91 @@ async function loadOrders(){
           ${address.pincode || ""}
         `.trim();
 
+
         if(!fullAddress){
+
           fullAddress = "-";
+
         }
+
       }
+
     }
 
-    const status = order.status || "PENDING";
 
-    const row = document.createElement("tr");
+    /* =========================
+       STATUS
+    ========================= */
+
+    const status =
+      order.status ||
+      order.order_status ||
+      "PENDING";
+
+
+    const row =
+      document.createElement("tr");
+
 
     row.innerHTML = `
-      <td>
-        ${customerName}
-      </td>
 
       <td>
-        ${phone}
+        ${escapeHtml(customerName)}
       </td>
 
-      <td>
-        ${fullAddress}
-      </td>
 
       <td>
-        ₹${order.total || 0}
+        ${escapeHtml(phone)}
       </td>
 
+
       <td>
+        ${escapeHtml(fullAddress)}
+      </td>
+
+
+      <td>
+        ₹${Number(order.total || 0)}
+      </td>
+
+
+      <td>
+
         <span class="status">
-          ${status}
+          ${escapeHtml(status)}
         </span>
+
       </td>
+
 
       <td>
 
-        ${
-          status === "PENDING"
-          ? `
-            <button
-              onclick="updateOrderStatus('${order.id}','APPROVED')"
-              style="background:#087f5b;color:white;border:0;padding:7px 10px;border-radius:6px;margin-right:5px;">
-              Approve
-            </button>
-
-            <button
-              onclick="updateOrderStatus('${order.id}','REJECTED')"
-              style="background:#c62828;color:white;border:0;padding:7px 10px;border-radius:6px;">
-              Reject
-            </button>
-          `
-          : "No action"
-        }
+        <button
+          onclick="viewOrderDetails('${order.id}')"
+          style="
+            background:#087f5b;
+            color:white;
+            border:0;
+            padding:7px 12px;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:bold;
+          "
+        >
+          🔎 Details
+        </button>
 
       </td>
+
     `;
 
+
     tbody.appendChild(row);
+
   }
 
-    }
+             }
+
 async function updateOrderStatus(orderId, newStatus){
 
   const confirmChange = confirm(
