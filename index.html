@@ -208,6 +208,7 @@ footer{
 </footer>
 
 <script>
+
 const SUPABASE_URL =
   "https://ymhaxeferrpyhuavzcgu.supabase.co";
 
@@ -219,61 +220,183 @@ const supabaseClient =
     SUPABASE_URL,
     SUPABASE_KEY
   );
-  supabaseClient.auth.getSession().then(({ data }) => {
+
+
+/* =========================
+   SUPABASE SESSION
+   ========================= */
+
+supabaseClient.auth.getSession().then(({ data }) => {
+
   console.log("SESSION:", data.session);
+
 });
-const medicines = [
-  {name:"Paracetamol 500mg", price:25},
-  {name:"Paracetamol 650mg", price:30},
-  {name:"ORS", price:25},
-  {name:"Vitamin C Tablets", price:80},
-  {name:"Multivitamin Tablets", price:150},
-  {name:"Antacid Tablets", price:60},
-  {name:"Pain Relief Gel", price:110},
-  {name:"Cough Syrup", price:120}
-];
+
+
+/* =========================
+   MEDICINES + CART
+   ========================= */
+
+let medicines = [];
 
 let cart = [];
 
-function displayMedicines(list = medicines){
 
-  const box = document.getElementById("medicineList");
+/* =========================
+   LOAD MEDICINES
+   ========================= */
 
-  if(list.length === 0){
-    box.innerHTML = "<p>No medicine found.</p>";
+async function loadMedicines(){
+
+  const { data, error } =
+    await supabaseClient
+      .from("medicines")
+      .select("id, name, sale_price")
+      .eq("active", true)
+      .order("name");
+
+
+  if(error){
+
+    console.error(
+      "Medicines load error:",
+      error
+    );
+
+    alert(
+      "Medicines load failed:\n\n" +
+      error.message
+    );
+
     return;
   }
 
-  box.innerHTML = list.map((m,i)=>`
-    <div class="medicine">
-      <h3>💊 ${m.name}</h3>
-      <div class="price">₹${m.price}</div>
-      <button class="btn" onclick="addToCart(${i})">
-        Add to Cart
-      </button>
-    </div>
-  `).join("");
+
+  medicines = data.map(medicine => ({
+
+    id: medicine.id,
+
+    name: medicine.name,
+
+    price: Number(
+      medicine.sale_price ?? 0
+    )
+
+  }));
+
+
+  console.log(
+    "MEDICINES:",
+    medicines
+  );
+
+
+  displayMedicines();
+
 }
+
+
+/* =========================
+   DISPLAY MEDICINES
+   ========================= */
+
+function displayMedicines(list = medicines){
+
+  const box =
+    document.getElementById("medicineList");
+
+
+  if(list.length === 0){
+
+    box.innerHTML =
+      "<p>No medicine found.</p>";
+
+    return;
+  }
+
+
+  box.innerHTML =
+
+    list.map(m => `
+
+      <div class="medicine">
+
+        <h3>
+          💊 ${m.name}
+        </h3>
+
+        <div class="price">
+          ₹${m.price}
+        </div>
+
+        <button
+          class="btn"
+          onclick="addToCartById('${m.id}')">
+
+          Add to Cart
+
+        </button>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+/* =========================
+   SEARCH MEDICINES
+   ========================= */
 
 function searchMedicines(){
 
   const text =
-    document.getElementById("search").value.toLowerCase();
+    document
+      .getElementById("search")
+      .value
+      .toLowerCase();
 
-  const result = medicines.filter(m =>
-    m.name.toLowerCase().includes(text)
-  );
+
+  const result =
+    medicines.filter(m =>
+      m.name
+        .toLowerCase()
+        .includes(text)
+    );
+
 
   displayMedicines(result);
+
 }
 
-function addToCart(index){
 
-  const medicine = medicines[index];
+/* =========================
+   ADD TO CART
+   ========================= */
 
-  const existing = cart.find(
-    item => item.name === medicine.name
-  );
+function addToCartById(medicineId){
+
+  const medicine =
+    medicines.find(
+      m => m.id === medicineId
+    );
+
+
+  if(!medicine){
+
+    alert(
+      "Medicine not found."
+    );
+
+    return;
+  }
+
+
+  const existing =
+    cart.find(
+      item => item.id === medicine.id
+    );
+
 
   if(existing){
 
@@ -295,87 +418,174 @@ function addToCart(index){
 
   }
 
+
+  console.log(
+    "CART:",
+    cart
+  );
+
+
   updateCart();
+
 }
+
+
+/* =========================
+   REMOVE FROM CART
+   ========================= */
 
 function removeFromCart(index){
 
-  cart.splice(index,1);
+  cart.splice(index, 1);
+
   updateCart();
+
 }
+
+
+/* =========================
+   UPDATE CART
+   ========================= */
 
 function updateCart(){
 
-  const box = document.getElementById("cart");
+  const box =
+    document.getElementById("cart");
+
 
   if(cart.length === 0){
-    box.innerHTML = "<p>Your cart is empty.</p>";
-    document.getElementById("total").innerText = "0";
+
+    box.innerHTML =
+      "<p>Your cart is empty.</p>";
+
+    document
+      .getElementById("total")
+      .innerText = "0";
+
     return;
   }
 
+
   let total = 0;
 
-  box.innerHTML = cart.map((item,index)=>{
 
-    total += item.price * item.qty;
+  box.innerHTML =
 
-    return `
-      <div class="cart-item">
-        <span>
-          ${item.name}<br>
-          ₹${item.price} × ${item.qty}
-        </span>
+    cart.map((item, index) => {
 
-        <button
-          class="btn red"
-          onclick="removeFromCart(${index})">
-          Remove
-        </button>
-      </div>
-    `;
+      total +=
+        Number(item.price) *
+        Number(item.qty);
 
-  }).join("");
 
-  document.getElementById("total").innerText = total;
+      return `
+
+        <div class="cart-item">
+
+          <span>
+
+            ${item.name}<br>
+
+            ₹${item.price} × ${item.qty}
+
+          </span>
+
+
+          <button
+            class="btn red"
+            onclick="removeFromCart(${index})">
+
+            Remove
+
+          </button>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+
+  document
+    .getElementById("total")
+    .innerText = total;
+
 }
+
+
+/* =========================
+   CLEAR CART
+   ========================= */
 
 function clearCart(){
 
   cart = [];
+
   updateCart();
+
 }
+
+
+/* =========================
+   PRESCRIPTION UPLOAD
+   ========================= */
 
 async function showPrescription(){
 
   const file =
-    document.getElementById("prescription").files[0];
+    document
+      .getElementById("prescription")
+      .files[0];
+
 
   if(!file){
-    return;
-  }
-
-  if(file.size > 50 * 1024 * 1024){
-
-    alert("Prescription file 50 MB se zyada nahi honi chahiye.");
-
-    document.getElementById("prescription").value = "";
 
     return;
   }
 
-  document.getElementById("fileName").innerText =
-    "Uploading: " + file.name + "...";
+
+  if(
+    file.size >
+    50 * 1024 * 1024
+  ){
+
+    alert(
+      "Prescription file 50 MB se zyada nahi honi chahiye."
+    );
+
+
+    document
+      .getElementById("prescription")
+      .value = "";
+
+
+    return;
+  }
+
+
+  document
+    .getElementById("fileName")
+    .innerText =
+      "Uploading: " +
+      file.name +
+      "...";
+
 
   try{
 
     const fileName =
       crypto.randomUUID() +
       "_" +
-      file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+      file.name.replace(
+        /[^a-zA-Z0-9._-]/g,
+        "_"
+      );
+
 
     const filePath =
-      "uploads/" + fileName;
+      "uploads/" +
+      fileName;
+
 
     const { error } =
       await supabaseClient
@@ -385,37 +595,50 @@ async function showPrescription(){
           filePath,
           file,
           {
-            cacheControl:"3600",
-            upsert:false
+            cacheControl: "3600",
+            upsert: false
           }
         );
+
 
     if(error){
 
       console.error(error);
+
 
       alert(
         "Prescription upload failed:\n\n" +
         error.message
       );
 
-      document.getElementById("fileName").innerText =
-        "Upload failed";
+
+      document
+        .getElementById("fileName")
+        .innerText =
+          "Upload failed";
+
 
       return;
     }
 
-    document.getElementById("fileName").innerText =
-      "✅ Uploaded: " + file.name;
 
-    // Save uploaded file path for Place Order
-    window.prescriptionPath = filePath;
+    document
+      .getElementById("fileName")
+      .innerText =
+        "✅ Uploaded: " +
+        file.name;
+
+
+    window.prescriptionPath =
+      filePath;
 
   }
+
 
   catch(error){
 
     console.error(error);
+
 
     alert(
       "Something went wrong:\n\n" +
@@ -426,26 +649,57 @@ async function showPrescription(){
 
 }
 
-  async function placeOrder(){
+
+/* =========================
+   PLACE ORDER
+   ========================= */
+
+async function placeOrder(){
 
   if(cart.length === 0){
-    alert("Please add medicine to your cart first.");
+
+    alert(
+      "Please add medicine to your cart first."
+    );
+
     return;
   }
 
+
   const name =
-    document.getElementById("customerName").value.trim();
+    document
+      .getElementById("customerName")
+      .value
+      .trim();
+
 
   const phone =
-    document.getElementById("customerPhone").value.trim();
+    document
+      .getElementById("customerPhone")
+      .value
+      .trim();
+
 
   const address =
-    document.getElementById("address").value.trim();
+    document
+      .getElementById("address")
+      .value
+      .trim();
+
 
   const pincode =
-    document.getElementById("pincode").value.trim();
+    document
+      .getElementById("pincode")
+      .value
+      .trim();
 
-  if(!name || !phone || !address || !pincode){
+
+  if(
+    !name ||
+    !phone ||
+    !address ||
+    !pincode
+  ){
 
     alert(
       "Please enter your name, mobile number, address and pincode."
@@ -454,27 +708,37 @@ async function showPrescription(){
     return;
   }
 
+
   if(!/^\d{6}$/.test(pincode)){
 
-    alert("Please enter a valid 6 digit pincode.");
+    alert(
+      "Please enter a valid 6 digit pincode."
+    );
 
     return;
   }
 
+
   const file =
-    document.getElementById("prescription").files[0];
+    document
+      .getElementById("prescription")
+      .files[0];
 
 
   /* =========================
      1. FIND / CREATE CUSTOMER
      ========================= */
 
-  let { data: customer, error: customerError } =
+  let {
+    data: customer,
+    error: customerError
+  } =
     await supabaseClient
       .from("users")
       .select("id")
       .eq("phone", phone)
       .maybeSingle();
+
 
   if(customerError){
 
@@ -483,10 +747,12 @@ async function showPrescription(){
       customerError
     );
 
+
     alert(
       "Customer check failed:\n\n" +
       customerError.message
     );
+
 
     return;
   }
@@ -494,16 +760,27 @@ async function showPrescription(){
 
   if(!customer){
 
-    const { data: newCustomer, error: createError } =
+    const {
+      data: newCustomer,
+      error: createError
+    } =
       await supabaseClient
         .from("users")
         .insert({
-          id: crypto.randomUUID(),
-          name: name,
-          phone: phone
+
+          id:
+            crypto.randomUUID(),
+
+          name:
+            name,
+
+          phone:
+            phone
+
         })
         .select("id")
         .single();
+
 
     if(createError){
 
@@ -512,71 +789,116 @@ async function showPrescription(){
         createError
       );
 
+
       alert(
         "Customer save failed:\n\n" +
         createError.message
       );
 
+
       return;
     }
 
-    customer = newCustomer;
+
+    customer =
+      newCustomer;
+
   }
 
 
-/* =========================
-   2. SAVE ADDRESS
-   ========================= */
+  /* =========================
+     2. SAVE ADDRESS
+     ========================= */
 
-const addressId = crypto.randomUUID();
+  const addressId =
+    crypto.randomUUID();
 
-const { error: addressError } =
-  await supabaseClient
-    .from("addresses")
-    .insert({
-      id: addressId,
-      user_id: customer.id,
-      recipient_name: name,
-      phone: phone,
-      address: address,
-      city: "Gorakhpur",
-      pincode: pincode
-    });
 
-if(addressError){
+  const { error: addressError } =
+    await supabaseClient
+      .from("addresses")
+      .insert({
 
-  console.error(
-    "Address database error:",
-    addressError
-  );
+        id:
+          addressId,
 
-  alert(
-    "Address save failed:\n\n" +
-    addressError.message
-  );
+        user_id:
+          customer.id,
 
-  return;
-}
+        recipient_name:
+          name,
+
+        phone:
+          phone,
+
+        address:
+          address,
+
+        city:
+          "Gorakhpur",
+
+        pincode:
+          pincode
+
+      });
+
+
+  if(addressError){
+
+    console.error(
+      "Address database error:",
+      addressError
+    );
+
+
+    alert(
+      "Address save failed:\n\n" +
+      addressError.message
+    );
+
+
+    return;
+  }
+
 
   /* =========================
      3. SAVE PRESCRIPTION
      ========================= */
 
-  let prescriptionId = null;
+  let prescriptionId =
+    null;
 
-  if(file && window.prescriptionPath){
 
-    prescriptionId = crypto.randomUUID();
+  if(
+    file &&
+    window.prescriptionPath
+  ){
 
-    const { error: prescriptionError } =
+    prescriptionId =
+      crypto.randomUUID();
+
+
+    const {
+      error: prescriptionError
+    } =
       await supabaseClient
         .from("prescriptions")
         .insert({
-          id: prescriptionId,
-          user_id: customer.id,
-          private_file_key: window.prescriptionPath,
-          status: "PENDING"
+
+          id:
+            prescriptionId,
+
+          user_id:
+            customer.id,
+
+          private_file_key:
+            window.prescriptionPath,
+
+          status:
+            "PENDING"
+
         });
+
 
     if(prescriptionError){
 
@@ -585,13 +907,16 @@ if(addressError){
         prescriptionError
       );
 
+
       alert(
         "Prescription database save failed:\n\n" +
         prescriptionError.message
       );
 
+
       return;
     }
+
   }
 
 
@@ -601,28 +926,61 @@ if(addressError){
 
   let total = 0;
 
-cart.forEach(item => {
 
-  const price = Number(item.price ?? item.sale_price ?? 0);
-  const qty = Number(item.qty ?? 0);
+  cart.forEach(item => {
 
-  const amount = price * qty;
+    const price =
+      Number(
+        item.price ??
+        item.sale_price ??
+        0
+      );
 
-  total += amount;
-});
 
-console.log("CART:", cart);
-console.log("TOTAL:", total);
-if(!Number.isFinite(total) || total <= 0){
+    const qty =
+      Number(
+        item.qty ?? 0
+      );
 
-  console.error("Invalid total:", total);
 
-  alert(
-    "Order total is invalid: " + total
+    total +=
+      price * qty;
+
+  });
+
+
+  console.log(
+    "CART:",
+    cart
   );
 
-  return;
+
+  console.log(
+    "TOTAL:",
+    total
+  );
+
+
+  if(
+    !Number.isFinite(total) ||
+    total <= 0
+  ){
+
+    console.error(
+      "Invalid total:",
+      total
+    );
+
+
+    alert(
+      "Order total is invalid: " +
+      total
+    );
+
+
+    return;
   }
+
 
   /* =========================
      5. SAVE ORDER
@@ -630,15 +988,21 @@ if(!Number.isFinite(total) || total <= 0){
 
   const orderData = {
 
-    id: crypto.randomUUID(),
+    id:
+      crypto.randomUUID(),
 
-    user_id: customer.id,
+    user_id:
+      customer.id,
 
-    address_id: addressId,
+    address_id:
+      addressId,
 
-    total: Number(total),
+    total:
+      Number(total),
 
-    status: "PENDING"
+    status:
+      "PENDING"
+
   };
 
 
@@ -646,13 +1010,16 @@ if(!Number.isFinite(total) || total <= 0){
 
     orderData.prescription_id =
       prescriptionId;
+
   }
 
 
   const { error: orderError } =
     await supabaseClient
       .from("orders")
-      .insert(orderData);
+      .insert(
+        orderData
+      );
 
 
   if(orderError){
@@ -662,40 +1029,58 @@ if(!Number.isFinite(total) || total <= 0){
       orderError
     );
 
+
     alert(
       "Order save failed:\n\n" +
       orderError.message
     );
 
+
     return;
   }
+
 
   /* =========================
      5A. SAVE ORDER ITEMS
      ========================= */
 
-  const orderItems = cart.map(item => {
+  const orderItems =
+    cart.map(item => {
 
-    const price =
-      Number(item.price ?? item.sale_price ?? 0);
+      const price =
+        Number(
+          item.price ??
+          item.sale_price ??
+          0
+        );
 
-    const qty =
-      Number(item.qty ?? 0);
 
-    return {
-      id: crypto.randomUUID(),
+      const qty =
+        Number(
+          item.qty ?? 0
+        );
 
-      order_id: orderData.id,
 
-      medicine_id:
-        item.id || item.medicine_id || null,
+      return {
 
-      quantity: qty,
+        id:
+          crypto.randomUUID(),
 
-      unit_price: price
-    };
+        order_id:
+          orderData.id,
 
-  });
+        medicine_id:
+          item.id,
+
+        quantity:
+          qty,
+
+        unit_price:
+          price
+
+      };
+
+    });
 
 
   console.log(
@@ -704,10 +1089,14 @@ if(!Number.isFinite(total) || total <= 0){
   );
 
 
-  const { error: orderItemsError } =
+  const {
+    error: orderItemsError
+  } =
     await supabaseClient
       .from("order_items")
-      .insert(orderItems);
+      .insert(
+        orderItems
+      );
 
 
   if(orderItemsError){
@@ -717,14 +1106,17 @@ if(!Number.isFinite(total) || total <= 0){
       orderItemsError
     );
 
+
     alert(
       "Order items save failed:\n\n" +
       orderItemsError.message
     );
 
+
     return;
-    }
-    
+  }
+
+
   /* =========================
      6. CREATE WHATSAPP MESSAGE
      ========================= */
@@ -732,41 +1124,65 @@ if(!Number.isFinite(total) || total <= 0){
   let message =
     "Hello CHEQUE POOL HEALTH CARE AND MEDICOS,\n\n";
 
+
   message +=
     "I want to place an order.\n\n";
 
-  message +=
-    "Customer: " + name + "\n";
 
   message +=
-    "Phone: " + phone + "\n";
+    "Customer: " +
+    name +
+    "\n";
+
 
   message +=
-    "Address: " + address + "\n";
+    "Phone: " +
+    phone +
+    "\n";
+
+
+  message +=
+    "Address: " +
+    address +
+    "\n";
+
 
   message +=
     "City: Gorakhpur\n";
 
-  message +=
-    "Pincode: " + pincode + "\n\n";
 
-  message += "Order:\n";
+  message +=
+    "Pincode: " +
+    pincode +
+    "\n\n";
+
+
+  message +=
+    "Order:\n";
 
 
   cart.forEach(item => {
 
     const amount =
-      Number(item.price) * Number(item.qty);
+      Number(item.price) *
+      Number(item.qty);
+
 
     message +=
-      "- " + item.name +
-      " × " + item.qty +
-      " = ₹" + amount + "\n";
+      "- " +
+      item.name +
+      " × " +
+      item.qty +
+      " = ₹" +
+      amount +
+      "\n";
+
   });
 
 
   message +=
-    "\nTotal: ₹" + total;
+    "\nTotal: ₹" +
+    total;
 
 
   if(file){
@@ -774,6 +1190,7 @@ if(!Number.isFinite(total) || total <= 0){
     message +=
       "\n\nPrescription uploaded: " +
       file.name;
+
   }
 
 
@@ -786,12 +1203,23 @@ if(!Number.isFinite(total) || total <= 0){
      ========================= */
 
   window.open(
+
     "https://wa.me/919651962524?text=" +
     encodeURIComponent(message),
+
     "_blank"
+
   );
+
 }
-displayMedicines();
+
+
+/* =========================
+   INITIAL LOAD
+   ========================= */
+
+loadMedicines();
+
 updateCart();
 
 </script>
