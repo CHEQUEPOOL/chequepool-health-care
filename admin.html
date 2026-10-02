@@ -354,6 +354,14 @@ function logout(){
     document.getElementById("ordersTableBody");
 
 
+  if(!tbody){
+
+    alert("ordersTableBody nahi mila.");
+
+    return;
+  }
+
+
   tbody.innerHTML = "";
 
 
@@ -378,18 +386,26 @@ function logout(){
     let fullAddress = "-";
 
 
-    /* =========================
-       CUSTOMER
-    ========================= */
+    /* CUSTOMER */
 
     if(order.user_id){
 
-      const { data: user } =
+      const { data: user, error: userError } =
         await supabaseClient
           .from("users")
           .select("name, phone")
           .eq("id", order.user_id)
           .maybeSingle();
+
+
+      if(userError){
+
+        console.error(
+          "Customer load error:",
+          userError
+        );
+
+      }
 
 
       if(user){
@@ -405,13 +421,11 @@ function logout(){
     }
 
 
-    /* =========================
-       ADDRESS
-    ========================= */
+    /* ADDRESS */
 
     if(order.address_id){
 
-      const { data: address } =
+      const { data: address, error: addressError } =
         await supabaseClient
           .from("addresses")
           .select(
@@ -419,6 +433,16 @@ function logout(){
           )
           .eq("id", order.address_id)
           .maybeSingle();
+
+
+      if(addressError){
+
+        console.error(
+          "Address load error:",
+          addressError
+        );
+
+      }
 
 
       if(address){
@@ -458,9 +482,7 @@ function logout(){
     }
 
 
-    /* =========================
-       STATUS
-    ========================= */
+    /* STATUS */
 
     const status =
       order.status ||
@@ -475,33 +497,26 @@ function logout(){
     row.innerHTML = `
 
       <td>
-        ${escapeHtml(customerName)}
+        ${customerName}
       </td>
-
 
       <td>
-        ${escapeHtml(phone)}
+        ${phone}
       </td>
-
 
       <td>
-        ${escapeHtml(fullAddress)}
+        ${fullAddress}
       </td>
-
 
       <td>
         ₹${Number(order.total || 0)}
       </td>
 
-
       <td>
-
         <span class="status">
-          ${escapeHtml(status)}
+          ${status}
         </span>
-
       </td>
-
 
       <td>
 
@@ -529,42 +544,7 @@ function logout(){
 
   }
 
-             }
-
-async function updateOrderStatus(orderId, newStatus){
-
-  const confirmChange = confirm(
-    "Order status " + newStatus + " karna hai?"
-  );
-
-  if(!confirmChange){
-    return;
-  }
-
-  const { error } = await supabaseClient
-    .from("orders")
-    .update({
-      status: newStatus
-    })
-    .eq("id", orderId);
-
-  if(error){
-
-    console.error(error);
-
-    alert(
-      "Status update nahi hua.\n\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  alert(
-    "Order status " +
-    newStatus +
-    " successfully updated."
-  );
+           }
 
     loadOrders();
 
