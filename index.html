@@ -276,13 +276,23 @@ function addToCart(index){
   );
 
   if(existing){
+
     existing.qty++;
+
   }else{
+
     cart.push({
-      name:medicine.name,
-      price:medicine.price,
-      qty:1
+
+      id: medicine.id,
+
+      name: medicine.name,
+
+      price: medicine.price,
+
+      qty: 1
+
     });
+
   }
 
   updateCart();
