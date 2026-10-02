@@ -624,9 +624,54 @@ let customers = [];
 </p>
 
         <p>
-          <strong>Payment Status:</strong><br>
-          ${escapeHtml(payment)}
-        </p>
+  <strong>Payment Status:</strong><br>
+
+  <select
+    id="paymentStatusSelect"
+    style="
+      width:100%;
+      padding:10px;
+      border:1px solid #ccc;
+      border-radius:7px;
+      font-size:15px;
+      margin-top:5px;
+    "
+  >
+
+    <option value="PENDING"
+      ${payment === "PENDING" ? "selected" : ""}>
+      PENDING
+    </option>
+
+    <option value="PAID"
+      ${payment === "PAID" ? "selected" : ""}>
+      PAID
+    </option>
+
+    <option value="FAILED"
+      ${payment === "FAILED" ? "selected" : ""}>
+      FAILED
+    </option>
+
+  </select>
+
+  <button
+    onclick="updatePaymentStatus('${order.id}')"
+    style="
+      margin-top:10px;
+      background:#087f5b;
+      color:white;
+      border:0;
+      padding:9px 14px;
+      border-radius:7px;
+      cursor:pointer;
+      font-weight:bold;
+    "
+  >
+    💳 Update Payment
+  </button>
+
+</p>
 
         <p>
           <strong>Delivery Address:</strong><br>
@@ -746,6 +791,83 @@ async function updateOrderStatus(orderId){
   }
 
   }
+
+/* =========================
+   UPDATE PAYMENT STATUS
+========================= */
+
+async function updatePaymentStatus(orderId){
+
+  const select =
+    document.getElementById("paymentStatusSelect");
+
+  if(!select){
+    alert("Payment status selector nahi mila.");
+    return;
+  }
+
+  const newPaymentStatus =
+    select.value;
+
+  const allowedStatuses = [
+    "PENDING",
+    "PAID",
+    "FAILED"
+  ];
+
+  if(!allowedStatuses.includes(newPaymentStatus)){
+    alert("Invalid payment status.");
+    return;
+  }
+
+  const confirmUpdate =
+    confirm(
+      "Payment status ko " +
+      newPaymentStatus +
+      " karna hai?"
+    );
+
+  if(!confirmUpdate){
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("orders")
+      .update({
+        payment_status: newPaymentStatus
+      })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Payment status update nahi ho paaya.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    "✅ Payment status successfully updated to " +
+    newPaymentStatus
+  );
+
+  /* Details popup close */
+  const detailsBox =
+    document.getElementById("orderDetailsBox");
+
+  if(detailsBox){
+    detailsBox.remove();
+  }
+
+    }
+    
 /* =========================
    VIEW PRESCRIPTION
 ========================= */
