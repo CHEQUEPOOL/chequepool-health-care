@@ -573,9 +573,55 @@ let customers = [];
         </p>
 
         <p>
-          <strong>Order Status:</strong><br>
-          ${escapeHtml(status)}
-        </p>
+  <strong>Order Status:</strong><br>
+
+  <select
+    id="orderStatusSelect"
+    style="
+      width:100%;
+      padding:10px;
+      border:1px solid #ccc;
+      border-radius:7px;
+      font-size:15px;
+      margin-top:5px;
+    "
+  >
+
+    <option value="PENDING"
+      ${status === "PENDING" ? "selected" : ""}>
+      PENDING
+    </option>
+
+    <option value="APPROVED"
+      ${status === "APPROVED" ? "selected" : ""}>
+      APPROVED
+    </option>
+
+    <option value="REJECTED"
+      ${status === "REJECTED" ? "selected" : ""}>
+      REJECTED
+    </option>
+
+
+  </select>
+
+  <button
+    onclick="updateOrderStatus('${order.id}')"
+    style="
+      margin-top:10px;
+      background:#087f5b;
+      color:white;
+      border:0;
+      padding:9px 14px;
+      border-radius:7px;
+      cursor:pointer;
+      font-weight:bold;
+    "
+  >
+    💾 Update Status
+  </button>
+
+</p>
 
         <p>
           <strong>Payment Status:</strong><br>
@@ -620,7 +666,86 @@ let customers = [];
   document.body.appendChild(detailsBox);
 }
 
+/* =========================
+   UPDATE ORDER STATUS
+========================= */
 
+async function updateOrderStatus(orderId){
+
+  const select =
+    document.getElementById("orderStatusSelect");
+
+  if(!select){
+    alert("Status selector nahi mila.");
+    return;
+  }
+
+  const newStatus =
+    select.value;
+
+  if(!newStatus){
+    alert("Please select order status.");
+    return;
+  }
+
+  const allowedStatuses = [
+    "PENDING",
+    "APPROVED",
+    "REJECTED"
+  ];
+
+  if(!allowedStatuses.includes(newStatus)){
+    alert("Invalid order status.");
+    return;
+  }
+
+  const confirmUpdate =
+    confirm(
+      "Order status ko " +
+      newStatus +
+      " karna hai?"
+    );
+
+  if(!confirmUpdate){
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("orders")
+      .update({
+        status: newStatus
+      })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Order status update nahi ho paaya.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    "✅ Order status successfully updated to " +
+    newStatus
+  );
+
+  /* Details popup close */
+  const detailsBox =
+    document.getElementById("orderDetailsBox");
+
+  if(detailsBox){
+    detailsBox.remove();
+  }
+
+  }
 /* =========================
    VIEW PRESCRIPTION
 ========================= */
