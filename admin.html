@@ -680,19 +680,26 @@ async function viewOrderDetails(orderId){
 
       let medicineName = "Medicine";
 
-      const { data: medicine } =
-        await supabaseClient
-          .from("medicines")
-          .select("name")
-          .eq("id", item.medicine_id)
-          .maybeSingle();
+const { data: medicine } =
+  await supabaseClient
+    .from("medicines")
+    .select("name, strength")
+    .eq("id", item.medicine_id)
+    .maybeSingle();
 
-      if(medicine){
+if(medicine){
 
-        medicineName =
-          medicine.name || "Medicine";
+  medicineName =
+    "💊 " + (medicine.name || "Medicine");
 
-      }
+  if(medicine.strength){
+
+    medicineName +=
+      " (" + medicine.strength + ")";
+
+  }
+
+}
 
 
       const itemTotal =
