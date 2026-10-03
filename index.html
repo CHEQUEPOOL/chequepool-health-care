@@ -251,7 +251,7 @@ async function loadMedicines(){
   const { data, error } =
     await supabaseClient
       .from("medicines")
-      .select("id, name, sale_price")
+      .select("id, name, strength, sale_price")
       .eq("active", true)
       .order("name");
 
@@ -274,15 +274,17 @@ async function loadMedicines(){
 
   medicines = data.map(medicine => ({
 
-    id: medicine.id,
+  id: medicine.id,
 
-    name: medicine.name,
+  name: medicine.name,
 
-    price: Number(
-      medicine.sale_price ?? 0
-    )
+  strength: medicine.strength || "",
 
-  }));
+  price: Number(
+    medicine.sale_price ?? 0
+  )
+
+}));
 
 
   console.log(
@@ -321,9 +323,16 @@ function displayMedicines(list = medicines){
 
       <div class="medicine">
 
-        <h3>
-          💊 ${m.name}
-        </h3>
+<h3>
+  💊 ${m.name}
+  ${
+    m.strength
+      ? `<span style="font-size:14px;color:#666;font-weight:normal;">
+          (${m.strength})
+         </span>`
+      : ""
+  }
+</h3>
 
         <div class="price">
           ₹${m.price}
@@ -408,9 +417,11 @@ function addToCartById(medicineId){
 
       id: medicine.id,
 
-      name: medicine.name,
+    name: medicine.name,
 
-      price: medicine.price,
+strength: medicine.strength,
+
+price: medicine.price,
 
       qty: 1
 
@@ -484,9 +495,15 @@ function updateCart(){
 
           <span>
 
-            ${item.name}<br>
+          💊 ${item.name}
+${
+  item.strength
+    ? ` (${item.strength})`
+    : ""
+}
+<br>
 
-            ₹${item.price} × ${item.qty}
+₹${item.price} × ${item.qty}
 
           </span>
 
@@ -1169,13 +1186,18 @@ async function placeOrder(){
 
 
     message +=
-      "- " +
-      item.name +
-      " × " +
-      item.qty +
-      " = ₹" +
-      amount +
-      "\n";
+  "- 💊 " +
+  item.name +
+  (
+    item.strength
+      ? " (" + item.strength + ")"
+      : ""
+  ) +
+  " × " +
+  item.qty +
+  " = ₹" +
+  amount +
+  "\n";
 
   });
 
