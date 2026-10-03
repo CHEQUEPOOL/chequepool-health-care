@@ -697,10 +697,23 @@ async function viewOrderDetails(orderId){
 
       medicineRows += `
         <tr>
-          <td>${medicineName}</td>
-          <td>${item.quantity}</td>
-          <td>₹${Number(item.unit_price || 0)}</td>
-          <td>₹${itemTotal}</td>
+
+          <td style="border:1px solid #ddd;padding:8px;">
+            ${medicineName}
+          </td>
+
+          <td style="border:1px solid #ddd;padding:8px;">
+            ${item.quantity}
+          </td>
+
+          <td style="border:1px solid #ddd;padding:8px;">
+            ₹${Number(item.unit_price || 0)}
+          </td>
+
+          <td style="border:1px solid #ddd;padding:8px;">
+            ₹${itemTotal}
+          </td>
+
         </tr>
       `;
 
@@ -710,10 +723,49 @@ async function viewOrderDetails(orderId){
 
     medicineRows = `
       <tr>
-        <td colspan="4">
+
+        <td
+          colspan="4"
+          style="border:1px solid #ddd;padding:8px;text-align:center;"
+        >
           No medicines found
         </td>
+
       </tr>
+    `;
+
+  }
+
+
+  /* PRESCRIPTION */
+
+  let prescriptionButton = "";
+
+  if(order.prescription_id){
+
+    prescriptionButton = `
+      <button
+        onclick="viewPrescription('${order.prescription_id}')"
+        style="
+          background:#1976d2;
+          color:white;
+          border:0;
+          padding:10px 15px;
+          border-radius:6px;
+          cursor:pointer;
+          margin-bottom:10px;
+        "
+      >
+        📄 View Prescription
+      </button>
+    `;
+
+  }else{
+
+    prescriptionButton = `
+      <p>
+        <b>Prescription:</b> Not attached
+      </p>
     `;
 
   }
@@ -734,6 +786,7 @@ async function viewOrderDetails(orderId){
 
   detailsBox.id =
     "orderDetailsBox";
+
 
   detailsBox.style = `
     position:fixed;
@@ -766,15 +819,19 @@ async function viewOrderDetails(orderId){
 
     <hr>
 
+
     <h3>Customer</h3>
 
     <p>
-      <b>Name:</b> ${customerName}
+      <b>Name:</b>
+      ${customerName}
     </p>
 
     <p>
-      <b>Phone:</b> ${customerPhone}
+      <b>Phone:</b>
+      ${customerPhone}
     </p>
+
 
     <h3>Delivery Address</h3>
 
@@ -782,9 +839,15 @@ async function viewOrderDetails(orderId){
       ${deliveryAddress}
     </p>
 
+
     <h3>Medicines</h3>
 
-    <table style="width:100%; border-collapse:collapse;">
+    <table
+      style="
+        width:100%;
+        border-collapse:collapse;
+      "
+    >
 
       <thead>
 
@@ -818,25 +881,108 @@ async function viewOrderDetails(orderId){
 
     </table>
 
+
     <h3>
       Total:
       ₹${Number(order.total || 0)}
     </h3>
+
 
     <p>
       <b>Order Status:</b>
       ${order.status || order.order_status || "PENDING"}
     </p>
 
+
     <p>
       <b>Payment Status:</b>
       ${order.payment_status || "PENDING"}
     </p>
 
+
+    <hr>
+
+
+    <h3>📄 Prescription</h3>
+
+    ${prescriptionButton}
+
+
+    <h3>⚙️ Order Controls</h3>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+
+      <button
+        onclick="updateOrderStatus('${order.id}','APPROVED')"
+        style="
+          background:#2e7d32;
+          color:white;
+          border:0;
+          padding:10px 15px;
+          border-radius:6px;
+          cursor:pointer;
+        "
+      >
+        ✅ Approve
+      </button>
+
+
+      <button
+        onclick="updateOrderStatus('${order.id}','REJECTED')"
+        style="
+          background:#c62828;
+          color:white;
+          border:0;
+          padding:10px 15px;
+          border-radius:6px;
+          cursor:pointer;
+        "
+      >
+        ❌ Reject
+      </button>
+
+
+      <button
+        onclick="updateOrderStatus('${order.id}','PENDING')"
+        style="
+          background:#f57c00;
+          color:white;
+          border:0;
+          padding:10px 15px;
+          border-radius:6px;
+          cursor:pointer;
+        "
+      >
+        ⏳ Pending
+      </button>
+
+
+      <button
+        onclick="updatePaymentStatus('${order.id}','PAID')"
+        style="
+          background:#1565c0;
+          color:white;
+          border:0;
+          padding:10px 15px;
+          border-radius:6px;
+          cursor:pointer;
+        "
+      >
+        💰 Mark Paid
+      </button>
+
+    </div>
+
+
     <br>
 
+
     <button
-      onclick="document.getElementById('orderDetailsBox').remove()"
+      onclick="
+        document
+          .getElementById('orderDetailsBox')
+          .remove()
+      "
       style="
         background:#555;
         color:white;
@@ -854,8 +1000,162 @@ async function viewOrderDetails(orderId){
 
   document.body.appendChild(detailsBox);
 
-     }
-           }
+}
+
+
+/* UPDATE ORDER STATUS */
+
+async function updateOrderStatus(orderId, newStatus){
+
+  const { error } =
+    await supabaseClient
+      .from("orders")
+      .update({
+        status: newStatus,
+        order_status: newStatus
+      })
+      .eq("id", orderId);
+
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Order status update nahi hua.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  alert(
+    "Order status successfully updated to " +
+    newStatus
+  );
+
+
+  const box =
+    document.getElementById("orderDetailsBox");
+
+  if(box){
+    box.remove();
+  }
+
+
+  loadOrders();
+
+}
+
+
+/* UPDATE PAYMENT STATUS */
+
+async function updatePaymentStatus(orderId, newStatus){
+
+  const { error } =
+    await supabaseClient
+      .from("orders")
+      .update({
+        payment_status: newStatus
+      })
+      .eq("id", orderId);
+
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Payment status update nahi hua.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  alert(
+    "Payment status successfully updated to " +
+    newStatus
+  );
+
+
+  const box =
+    document.getElementById("orderDetailsBox");
+
+  if(box){
+    box.remove();
+  }
+
+
+  loadOrders();
+
+}
+
+
+/* VIEW PRESCRIPTION */
+
+async function viewPrescription(prescriptionId){
+
+  const { data: prescription, error } =
+    await supabaseClient
+      .from("prescriptions")
+      .select("private_file_key")
+      .eq("id", prescriptionId)
+      .maybeSingle();
+
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Prescription load nahi ho paayi.\n\n" +
+      error.message
+    );
+
+    return;
+  }
+
+
+  if(!prescription || !prescription.private_file_key){
+
+    alert("Prescription file nahi mili.");
+
+    return;
+  }
+
+
+  const { data: signedData, error: signedError } =
+    await supabaseClient
+      .storage
+      .from("prescriptions")
+      .createSignedUrl(
+        prescription.private_file_key,
+        300
+      );
+
+
+  if(signedError){
+
+    console.error(signedError);
+
+    alert(
+      "Prescription open nahi ho paayi.\n\n" +
+      signedError.message
+    );
+
+    return;
+  }
+
+
+  window.open(
+    signedData.signedUrl,
+    "_blank"
+  );
+
+    }
 
 loadOrders();
 
