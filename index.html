@@ -1873,7 +1873,53 @@ async function placeOrder(){
 
   }
 
+  /* =========================
+     STOCK CHECK
+  ========================= */
 
+  for(const item of cart){
+
+    const {
+      data:stockMedicine,
+      error:stockError
+    } =
+      await supabaseClient
+        .from("medicines")
+        .select("id,name,stock,active")
+        .eq("id", item.id)
+        .eq("active", true)
+        .single();
+
+
+    if(stockError){
+
+      alert(
+        "Stock check failed:\n\n" +
+        stockError.message
+      );
+
+      return;
+    }
+
+
+    if(
+      Number(stockMedicine.stock) <
+      Number(item.qty)
+    ){
+
+      alert(
+        stockMedicine.name +
+        "\n\nAvailable stock: " +
+        stockMedicine.stock +
+        "\nRequested quantity: " +
+        item.qty
+      );
+
+      return;
+    }
+
+  }
+  
   /* =========================
      4. TOTAL
   ========================= */
