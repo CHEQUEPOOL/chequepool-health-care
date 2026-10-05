@@ -3,154 +3,590 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>CHEQUE POOL HEALTH CARE AND MEDICOS</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
 body{
   margin:0;
   font-family:Arial,sans-serif;
-  background:#f5f7fa;
-  color:#222;
+  background:#f4f8f6;
+  color:#17211d;
 }
+
+/* =========================
+   HEADER
+========================= */
+
 header{
-  background:#087f5b;
+  background:linear-gradient(135deg,#087f5b,#075e46);
   color:white;
-  padding:24px 15px;
+  padding:20px 15px;
   text-align:center;
+  position:sticky;
+  top:0;
+  z-index:1000;
+  box-shadow:0 3px 15px #0002;
 }
-header h1{margin:0;font-size:28px}
-header p{margin:8px 0 0;font-size:18px}
+
+header h1{
+  margin:0;
+  font-size:23px;
+  line-height:1.3;
+}
+
+header p{
+  margin:6px 0 0;
+  font-size:14px;
+  opacity:.9;
+}
+
+/* =========================
+   CONTAINER
+========================= */
 
 .container{
-  max-width:900px;
+  max-width:1000px;
   margin:auto;
-  padding:18px;
+  padding:15px;
 }
+
+/* =========================
+   HERO
+========================= */
+
+.hero{
+  background:white;
+  border-radius:18px;
+  padding:25px 20px;
+  margin:15px 0;
+  box-shadow:0 3px 15px #00000010;
+}
+
+.hero h2{
+  margin:0 0 8px;
+  font-size:25px;
+}
+
+.hero p{
+  margin:0 0 18px;
+  color:#66736e;
+  line-height:1.5;
+}
+
+.hero-buttons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+
+.btn{
+  border:0;
+  background:#087f5b;
+  color:white;
+  padding:11px 16px;
+  border-radius:9px;
+  cursor:pointer;
+  font-size:15px;
+  font-weight:bold;
+  text-decoration:none;
+  display:inline-block;
+}
+
+.btn:hover{
+  opacity:.9;
+}
+
+.btn.blue{
+  background:#1769aa;
+}
+
+.btn.red{
+  background:#d62828;
+}
+
+.btn.light{
+  background:#e8f5f0;
+  color:#087f5b;
+}
+
+.btn:disabled{
+  background:#aaa;
+  cursor:not-allowed;
+}
+
+/* =========================
+   CARDS
+========================= */
+
 .card{
   background:white;
   padding:20px;
   margin:15px 0;
-  border-radius:15px;
-  box-shadow:0 2px 10px #0001;
+  border-radius:18px;
+  box-shadow:0 3px 15px #00000010;
 }
 
-input,button{
-  font-size:16px;
+.card h2{
+  margin-top:0;
 }
+
+/* =========================
+   SEARCH
+========================= */
+
 .search{
   width:100%;
   padding:14px;
-  border:1px solid #ccc;
-  border-radius:10px;
-  margin:10px 0 15px;
+  border:1px solid #d2dad6;
+  border-radius:11px;
+  margin:8px 0 15px;
+  font-size:16px;
+  outline:none;
+}
+
+.search:focus,
+textarea:focus{
+  border-color:#087f5b;
+  box-shadow:0 0 0 3px #087f5b18;
+}
+
+/* =========================
+   CATEGORY
+========================= */
+
+.category-box{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:5px;
+  margin-bottom:15px;
+}
+
+.category-btn{
+  white-space:nowrap;
+  border:1px solid #cfdad5;
+  background:white;
+  color:#087f5b;
+  padding:9px 14px;
+  border-radius:20px;
+  cursor:pointer;
+}
+
+.category-btn.active{
+  background:#087f5b;
+  color:white;
+}
+
+/* =========================
+   MEDICINES GRID
+========================= */
+
+#medicineList{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
 }
 
 .medicine{
-  border:1px solid #ddd;
-  border-radius:12px;
+  border:1px solid #e0e7e4;
+  border-radius:15px;
   padding:15px;
-  margin:10px 0;
+  background:#fff;
+  position:relative;
 }
-.medicine h3{margin:0 0 8px}
-.price{
-  font-weight:bold;
+
+.medicine h3{
+  margin:0 0 7px;
+  font-size:17px;
+}
+
+.brand{
+  color:#68756f;
+  font-size:13px;
+  margin-bottom:8px;
+}
+
+.strength{
+  color:#555;
+  font-size:13px;
+}
+
+.category-label{
+  display:inline-block;
+  background:#e8f5f0;
+  color:#087f5b;
+  font-size:11px;
+  padding:4px 8px;
+  border-radius:20px;
+  margin:7px 0;
+}
+
+.price-row{
   margin:8px 0;
 }
-.btn{
-  display:inline-block;
-  border:0;
-  background:#087f5b;
-  color:white;
-  padding:12px 18px;
-  border-radius:8px;
-  cursor:pointer;
-  margin:5px 3px;
+
+.sale-price{
+  font-size:19px;
+  font-weight:bold;
+  color:#087f5b;
 }
-.btn.red{background:#d62828}
-.btn.blue{background:#1769aa}
+
+.mrp{
+  color:#888;
+  text-decoration:line-through;
+  margin-left:7px;
+  font-size:13px;
+}
+
+.discount{
+  color:#d62828;
+  font-size:12px;
+  font-weight:bold;
+  margin-left:5px;
+}
+
+.stock{
+  font-size:12px;
+  margin:7px 0;
+}
+
+.stock.available{
+  color:#087f5b;
+}
+
+.stock.out{
+  color:#d62828;
+}
+
+/* =========================
+   CART
+========================= */
 
 .cart-item{
   display:flex;
   justify-content:space-between;
-  gap:10px;
-  padding:10px 0;
-  border-bottom:1px solid #ddd;
+  gap:12px;
+  padding:13px 0;
+  border-bottom:1px solid #e2e7e5;
 }
+
+.cart-info{
+  flex:1;
+}
+
+.cart-name{
+  font-weight:bold;
+}
+
+.cart-price{
+  font-size:13px;
+  color:#666;
+  margin-top:4px;
+}
+
+.qty-controls{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-top:8px;
+}
+
+.qty-btn{
+  width:32px;
+  height:32px;
+  border:0;
+  border-radius:8px;
+  background:#e7f3ef;
+  color:#087f5b;
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.qty{
+  min-width:25px;
+  text-align:center;
+  font-weight:bold;
+}
+
+.total{
+  font-size:21px;
+  font-weight:bold;
+  margin:18px 0;
+  color:#087f5b;
+}
+
+/* =========================
+   FORMS
+========================= */
 
 textarea{
   width:100%;
-  min-height:90px;
-  padding:12px;
-  border:1px solid #ccc;
-  border-radius:8px;
+  min-height:100px;
+  padding:13px;
+  border:1px solid #d2dad6;
+  border-radius:10px;
+  resize:vertical;
+  font-size:16px;
+  font-family:Arial,sans-serif;
+  outline:none;
 }
+
+.form-label{
+  display:block;
+  margin-top:12px;
+  margin-bottom:5px;
+  font-size:14px;
+  font-weight:bold;
+}
+
+/* =========================
+   PRESCRIPTION
+========================= */
+
+.upload-box{
+  border:2px dashed #b8ccc4;
+  border-radius:13px;
+  padding:18px;
+  text-align:center;
+  background:#f8fbfa;
+}
+
+.upload-box input{
+  max-width:100%;
+}
+
+/* =========================
+   DELIVERY
+========================= */
+
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.info{
+  background:#f4f8f6;
+  padding:14px;
+  border-radius:12px;
+  text-align:center;
+}
+
+.info strong{
+  display:block;
+  margin-bottom:5px;
+  color:#087f5b;
+}
+
+/* =========================
+   STICKY CART
+========================= */
+
+.sticky-cart{
+  position:fixed;
+  bottom:15px;
+  left:15px;
+  right:15px;
+  max-width:600px;
+  margin:auto;
+  background:#087f5b;
+  color:white;
+  padding:13px 16px;
+  border-radius:14px;
+  box-shadow:0 5px 25px #0004;
+  z-index:999;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.sticky-cart button{
+  border:0;
+  background:white;
+  color:#087f5b;
+  padding:9px 14px;
+  border-radius:9px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* =========================
+   FOOTER
+========================= */
 
 footer{
   text-align:center;
-  padding:25px;
-  color:#666;
+  padding:35px 15px 90px;
+  color:#68736f;
+  font-size:13px;
 }
-.hidden{display:none}
-.total{
-  font-size:20px;
-  font-weight:bold;
-  margin:15px 0;
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:650px){
+
+  header h1{
+    font-size:19px;
+  }
+
+  .hero h2{
+    font-size:22px;
+  }
+
+  #medicineList{
+    grid-template-columns:1fr;
+  }
+
+  .info-grid{
+    grid-template-columns:1fr;
+  }
+
+  .cart-item{
+    align-items:flex-start;
+  }
+
 }
+
 </style>
 </head>
 
 <body>
 
+<!-- =========================
+     HEADER
+========================= -->
+
 <header>
-  <h1>CHEQUE POOL HEALTH CARE AND MEDICOS</h1>
+
+  <h1>💊 CHEQUE POOL HEALTH CARE</h1>
+
   <p>Gorakhpur • Online Medicine Store</p>
+
 </header>
+
 
 <div class="container">
 
-  <div class="card">
-    <h2>👋 Welcome</h2>
-    <p>Order medicines and healthcare products from our store.</p>
-    <a class="btn" href="tel:9651962524">📞 Call Shop</a>
-    <a class="btn blue"
-       href="https://wa.me/919651962524"
-       target="_blank">💬 WhatsApp</a>
+
+<!-- =========================
+     HERO
+========================= -->
+
+<div class="hero">
+
+  <h2>Healthcare made simple 💚</h2>
+
+  <p>
+    Order medicines and healthcare products
+    from CHEQUE POOL HEALTH CARE AND MEDICOS.
+  </p>
+
+  <div class="hero-buttons">
+
+    <a
+      class="btn"
+      href="tel:9651962524">
+      📞 Call Shop
+    </a>
+
+    <a
+      class="btn blue"
+      href="https://wa.me/919651962524"
+      target="_blank">
+      💬 WhatsApp
+    </a>
+
   </div>
 
-  <div class="card">
-    <h2>🔎 Search Medicines</h2>
+</div>
 
-    <input
-      id="search"
-      class="search"
-      type="text"
-      placeholder="Search medicine..."
-      oninput="searchMedicines()">
 
-    <div id="medicineList"></div>
+<!-- =========================
+     MEDICINES
+========================= -->
+
+<div class="card">
+
+  <h2>🔎 Find Medicines</h2>
+
+  <input
+    id="search"
+    class="search"
+    type="text"
+    placeholder="Search medicine..."
+    oninput="searchMedicines()">
+
+
+  <div
+    id="categories"
+    class="category-box">
   </div>
 
-  <div class="card">
-    <h2>🛒 Your Cart</h2>
 
-    <div id="cart"></div>
-
-    <div class="total">
-      Total: ₹<span id="total">0</span>
-    </div>
-
-    <button class="btn red" onclick="clearCart()">
-      Clear Cart
-    </button>
+  <div id="medicineList">
+    <p>Loading medicines...</p>
   </div>
 
-  <div class="card">
-    <h2>📋 Prescription</h2>
+</div>
 
-    <p>
-      For prescription medicines, please provide a valid prescription.
-    </p>
+
+<!-- =========================
+     CART
+========================= -->
+
+<div
+  class="card"
+  id="cartSection">
+
+  <h2>🛒 Your Cart</h2>
+
+  <div id="cart"></div>
+
+  <div class="total">
+    Total: ₹<span id="total">0</span>
+  </div>
+
+  <button
+    class="btn red"
+    onclick="clearCart()">
+    Clear Cart
+  </button>
+
+</div>
+
+
+<!-- =========================
+     PRESCRIPTION
+========================= -->
+
+<div class="card">
+
+  <h2>📋 Prescription</h2>
+
+  <p>
+    If your medicine requires a prescription,
+    please upload a valid prescription.
+  </p>
+
+  <div class="upload-box">
 
     <input
       type="file"
@@ -158,56 +594,150 @@ footer{
       accept="image/*,.pdf"
       onchange="showPrescription()">
 
-    <p id="fileName"></p>
-  </div>
-
-  <div class="card">
-    <h2>📦 Delivery Details</h2>
-
-    <input
-      id="customerName"
-      class="search"
-      placeholder="Your Name">
-
-    <input
-      id="customerPhone"
-      class="search"
-      type="tel"
-      placeholder="Mobile Number">
-
-    <textarea
-  id="address"
-  placeholder="Complete delivery address"></textarea>
-
-<input
-  id="pincode"
-  class="search"
-  type="tel"
-  inputmode="numeric"
-  maxlength="6"
-  placeholder="Pincode">
-
-<button class="btn" onclick="placeOrder()">
-      🛍️ Place Order on WhatsApp
-    </button>
-  </div>
-
-  <div class="card">
-    <h2>🚚 Delivery</h2>
-    <p>
-      Local medicine delivery available in Gorakhpur.
-      Delivery availability and charges will be confirmed by the shop.
+    <p id="fileName">
+      No prescription selected
     </p>
+
   </div>
 
 </div>
 
+
+<!-- =========================
+     DELIVERY DETAILS
+========================= -->
+
+<div class="card">
+
+  <h2>📦 Delivery Details</h2>
+
+  <label class="form-label">
+    Your Name
+  </label>
+
+  <input
+    id="customerName"
+    class="search"
+    placeholder="Enter your name">
+
+
+  <label class="form-label">
+    Mobile Number
+  </label>
+
+  <input
+    id="customerPhone"
+    class="search"
+    type="tel"
+    inputmode="numeric"
+    maxlength="10"
+    placeholder="10 digit mobile number">
+
+
+  <label class="form-label">
+    Complete Address
+  </label>
+
+  <textarea
+    id="address"
+    placeholder="House / Street / Area"></textarea>
+
+
+  <label class="form-label">
+    Pincode
+  </label>
+
+  <input
+    id="pincode"
+    class="search"
+    type="tel"
+    inputmode="numeric"
+    maxlength="6"
+    placeholder="6 digit pincode">
+
+
+  <button
+    class="btn"
+    style="width:100%;margin-top:10px;"
+    onclick="placeOrder()">
+
+    🛍️ Place Order on WhatsApp
+
+  </button>
+
+</div>
+
+
+<!-- =========================
+     DELIVERY INFO
+========================= -->
+
+<div class="card">
+
+  <h2>🚚 Delivery Information</h2>
+
+  <div class="info-grid">
+
+    <div class="info">
+      <strong>📍 Location</strong>
+      Gorakhpur
+    </div>
+
+    <div class="info">
+      <strong>📦 Delivery</strong>
+      Local Delivery
+    </div>
+
+    <div class="info">
+      <strong>💬 Support</strong>
+      WhatsApp / Call
+    </div>
+
+  </div>
+
+  <p>
+    Delivery availability and charges will be
+    confirmed by the shop.
+  </p>
+
+</div>
+
+
+</div>
+
+
+<!-- =========================
+     STICKY CART
+========================= -->
+
+<div class="sticky-cart">
+
+  <span>
+    🛒 <span id="cartCount">0</span> items
+    • ₹<span id="stickyTotal">0</span>
+  </span>
+
+  <button onclick="scrollToCart()">
+    View Cart
+  </button>
+
+</div>
+
+
 <footer>
-  © 2026 CHEQUE POOL HEALTH CARE AND MEDICOS<br>
+
+  © 2026 CHEQUE POOL HEALTH CARE AND MEDICOS
+  <br>
   Gorakhpur
+
 </footer>
 
+
 <script>
+
+/* =========================
+   SUPABASE
+========================= */
 
 const SUPABASE_URL =
   "https://ymhaxeferrpyhuavzcgu.supabase.co";
@@ -223,35 +753,37 @@ const supabaseClient =
 
 
 /* =========================
-   SUPABASE SESSION
-   ========================= */
-
-supabaseClient.auth.getSession().then(({ data }) => {
-
-  console.log("SESSION:", data.session);
-
-});
-
-
-/* =========================
-   MEDICINES + CART
-   ========================= */
+   DATA
+========================= */
 
 let medicines = [];
 
 let cart = [];
 
+let selectedCategory = "ALL";
+
 
 /* =========================
    LOAD MEDICINES
-   ========================= */
+========================= */
 
 async function loadMedicines(){
 
   const { data, error } =
     await supabaseClient
       .from("medicines")
-      .select("id, name, strength, sale_price")
+      .select(`
+        id,
+        name,
+        brand,
+        strength,
+        category,
+        mrp,
+        sale_price,
+        stock,
+        require_prescription,
+        active
+      `)
       .eq("active", true)
       .order("name");
 
@@ -263,28 +795,41 @@ async function loadMedicines(){
       error
     );
 
-    alert(
-      "Medicines load failed:\n\n" +
-      error.message
-    );
+    document.getElementById(
+      "medicineList"
+    ).innerHTML =
+      "<p>Medicines load nahi ho paayi.</p>";
 
     return;
   }
 
 
-  medicines = data.map(medicine => ({
+  medicines =
+    (data || []).map(m => ({
 
-  id: medicine.id,
+      id: m.id,
 
-  name: medicine.name,
+      name: m.name || "",
 
-  strength: medicine.strength || "",
+      brand: m.brand || "",
 
-  price: Number(
-    medicine.sale_price ?? 0
-  )
+      strength: m.strength || "",
 
-}));
+      category: m.category || "Other",
+
+      mrp: Number(m.mrp || 0),
+
+      price: Number(m.sale_price || 0),
+
+      stock: Number(m.stock || 0),
+
+      requirePrescription:
+        Boolean(m.require_prescription),
+
+      active:
+        Boolean(m.active)
+
+    }));
 
 
   console.log(
@@ -293,19 +838,105 @@ async function loadMedicines(){
   );
 
 
+  buildCategories();
+
   displayMedicines();
 
 }
 
 
 /* =========================
-   DISPLAY MEDICINES
-   ========================= */
+   CATEGORIES
+========================= */
 
-function displayMedicines(list = medicines){
+function buildCategories(){
 
   const box =
-    document.getElementById("medicineList");
+    document.getElementById(
+      "categories"
+    );
+
+
+  const categories = [
+    ...new Set(
+      medicines
+        .map(m => m.category)
+        .filter(Boolean)
+    )
+  ];
+
+
+  box.innerHTML = `
+
+    <button
+      class="category-btn active"
+      onclick="selectCategory('ALL', this)">
+      All
+    </button>
+
+    ${
+      categories.map(category => `
+
+        <button
+          class="category-btn"
+          onclick="selectCategory(
+            ${JSON.stringify(category)},
+            this
+          )">
+
+          ${category}
+
+        </button>
+
+      `).join("")
+    }
+
+  `;
+
+}
+
+
+/* =========================
+   CATEGORY SELECT
+========================= */
+
+function selectCategory(
+  category,
+  button
+){
+
+  selectedCategory =
+    category;
+
+
+  document
+    .querySelectorAll(
+      ".category-btn"
+    )
+    .forEach(btn =>
+      btn.classList.remove("active")
+    );
+
+
+  button.classList.add("active");
+
+  searchMedicines();
+
+}
+
+
+/* =========================
+   DISPLAY MEDICINES
+========================= */
+
+function displayMedicines(
+  list = medicines
+){
+
+  const box =
+    document.getElementById(
+      "medicineList"
+    );
 
 
   if(list.length === 0){
@@ -319,43 +950,156 @@ function displayMedicines(list = medicines){
 
   box.innerHTML =
 
-    list.map(m => `
+    list.map(m => {
 
-      <div class="medicine">
+      let discount = 0;
 
-<h3>
-  💊 ${m.name}
-  ${
-    m.strength
-      ? `<span style="font-size:14px;color:#666;font-weight:normal;">
-          (${m.strength})
-         </span>`
-      : ""
-  }
-</h3>
 
-        <div class="price">
-          ₹${m.price}
+      if(
+        m.mrp > 0 &&
+        m.price < m.mrp
+      ){
+
+        discount =
+          Math.round(
+            ((m.mrp - m.price) /
+              m.mrp) * 100
+          );
+
+      }
+
+
+      const stockText =
+        m.stock > 0
+          ? `Available: ${m.stock}`
+          : "Out of Stock";
+
+
+      return `
+
+        <div class="medicine">
+
+          <h3>
+            💊 ${escapeHtml(m.name)}
+          </h3>
+
+
+          ${
+            m.brand
+              ? `
+                <div class="brand">
+                  ${escapeHtml(m.brand)}
+                </div>
+              `
+              : ""
+          }
+
+
+          ${
+            m.strength
+              ? `
+                <div class="strength">
+                  Strength: ${escapeHtml(m.strength)}
+                </div>
+              `
+              : ""
+          }
+
+
+          <span class="category-label">
+            ${escapeHtml(m.category)}
+          </span>
+
+
+          <div class="price-row">
+
+            <span class="sale-price">
+              ₹${m.price.toFixed(2)}
+            </span>
+
+            ${
+              m.mrp > m.price
+                ? `
+                  <span class="mrp">
+                    ₹${m.mrp.toFixed(2)}
+                  </span>
+
+                  <span class="discount">
+                    ${discount}% OFF
+                  </span>
+                `
+                : ""
+            }
+
+          </div>
+
+
+          <div
+            class="stock ${
+              m.stock > 0
+                ? "available"
+                : "out"
+            }">
+
+            ${
+              m.stock > 0
+                ? "✓ " + stockText
+                : "✕ " + stockText
+            }
+
+          </div>
+
+
+          ${
+            m.requirePrescription
+              ? `
+                <div
+                  style="
+                    color:#9a6700;
+                    font-size:12px;
+                    margin:7px 0;
+                  ">
+
+                  📋 Prescription Required
+
+                </div>
+              `
+              : ""
+          }
+
+
+          <button
+            class="btn"
+            style="width:100%;"
+            ${
+              m.stock <= 0
+                ? "disabled"
+                : ""
+            }
+            onclick="addToCartById(
+              '${m.id}'
+            )">
+
+            ${
+              m.stock > 0
+                ? "➕ Add to Cart"
+                : "Out of Stock"
+            }
+
+          </button>
+
         </div>
 
-        <button
-          class="btn"
-          onclick="addToCartById('${m.id}')">
+      `;
 
-          Add to Cart
-
-        </button>
-
-      </div>
-
-    `).join("");
+    }).join("");
 
 }
 
 
 /* =========================
-   SEARCH MEDICINES
-   ========================= */
+   SEARCH
+========================= */
 
 function searchMedicines(){
 
@@ -363,15 +1107,48 @@ function searchMedicines(){
     document
       .getElementById("search")
       .value
-      .toLowerCase();
+      .toLowerCase()
+      .trim();
 
 
-  const result =
-    medicines.filter(m =>
-      m.name
-        .toLowerCase()
-        .includes(text)
-    );
+  let result =
+    medicines.filter(m => {
+
+      const matchesSearch =
+
+        m.name
+          .toLowerCase()
+          .includes(text)
+
+        ||
+
+        m.brand
+          .toLowerCase()
+          .includes(text)
+
+        ||
+
+        m.category
+          .toLowerCase()
+          .includes(text);
+
+
+      const matchesCategory =
+
+        selectedCategory === "ALL"
+
+        ||
+
+        m.category ===
+          selectedCategory;
+
+
+      return (
+        matchesSearch &&
+        matchesCategory
+      );
+
+    });
 
 
   displayMedicines(result);
@@ -381,9 +1158,11 @@ function searchMedicines(){
 
 /* =========================
    ADD TO CART
-   ========================= */
+========================= */
 
-function addToCartById(medicineId){
+function addToCartById(
+  medicineId
+){
 
   const medicine =
     medicines.find(
@@ -401,13 +1180,38 @@ function addToCartById(medicineId){
   }
 
 
+  if(medicine.stock <= 0){
+
+    alert(
+      "This medicine is out of stock."
+    );
+
+    return;
+  }
+
+
   const existing =
     cart.find(
-      item => item.id === medicine.id
+      item =>
+        item.id === medicine.id
     );
 
 
   if(existing){
+
+    if(
+      existing.qty >=
+      medicine.stock
+    ){
+
+      alert(
+        "Available stock: " +
+        medicine.stock
+      );
+
+      return;
+    }
+
 
     existing.qty++;
 
@@ -415,25 +1219,33 @@ function addToCartById(medicineId){
 
     cart.push({
 
-      id: medicine.id,
+      id:
+        medicine.id,
 
-    name: medicine.name,
+      name:
+        medicine.name,
 
-strength: medicine.strength,
+      brand:
+        medicine.brand,
 
-price: medicine.price,
+      strength:
+        medicine.strength,
 
-      qty: 1
+      price:
+        medicine.price,
+
+      stock:
+        medicine.stock,
+
+      requirePrescription:
+        medicine.requirePrescription,
+
+      qty:
+        1
 
     });
 
   }
-
-
-  console.log(
-    "CART:",
-    cart
-  );
 
 
   updateCart();
@@ -442,12 +1254,70 @@ price: medicine.price,
 
 
 /* =========================
-   REMOVE FROM CART
-   ========================= */
+   CHANGE QUANTITY
+========================= */
 
-function removeFromCart(index){
+function changeQty(
+  index,
+  change
+){
 
-  cart.splice(index, 1);
+  const item =
+    cart[index];
+
+
+  if(!item){
+
+    return;
+  }
+
+
+  const newQty =
+    item.qty + change;
+
+
+  if(newQty <= 0){
+
+    cart.splice(index,1);
+
+    updateCart();
+
+    return;
+  }
+
+
+  if(
+    newQty >
+    Number(item.stock)
+  ){
+
+    alert(
+      "Available stock: " +
+      item.stock
+    );
+
+    return;
+  }
+
+
+  item.qty =
+    newQty;
+
+
+  updateCart();
+
+}
+
+
+/* =========================
+   REMOVE
+========================= */
+
+function removeFromCart(
+  index
+){
+
+  cart.splice(index,1);
 
   updateCart();
 
@@ -456,12 +1326,19 @@ function removeFromCart(index){
 
 /* =========================
    UPDATE CART
-   ========================= */
+========================= */
 
 function updateCart(){
 
   const box =
-    document.getElementById("cart");
+    document.getElementById(
+      "cart"
+    );
+
+
+  let total = 0;
+
+  let count = 0;
 
 
   if(cart.length === 0){
@@ -469,70 +1346,135 @@ function updateCart(){
     box.innerHTML =
       "<p>Your cart is empty.</p>";
 
-    document
-      .getElementById("total")
-      .innerText = "0";
+  }else{
 
-    return;
+    box.innerHTML =
+
+      cart.map(
+        (item,index) => {
+
+          const amount =
+            Number(item.price) *
+            Number(item.qty);
+
+
+          total += amount;
+
+          count +=
+            Number(item.qty);
+
+
+          return `
+
+            <div class="cart-item">
+
+              <div class="cart-info">
+
+                <div class="cart-name">
+                  💊 ${escapeHtml(item.name)}
+                </div>
+
+
+                ${
+                  item.strength
+                    ? `
+                      <div class="cart-price">
+                        ${escapeHtml(
+                          item.strength
+                        )}
+                      </div>
+                    `
+                    : ""
+                }
+
+
+                <div class="cart-price">
+                  ₹${Number(
+                    item.price
+                  ).toFixed(2)}
+                  × ${item.qty}
+                  = ₹${amount.toFixed(2)}
+                </div>
+
+
+                <div class="qty-controls">
+
+                  <button
+                    class="qty-btn"
+                    onclick="changeQty(
+                      ${index},
+                      -1
+                    )">
+
+                    −
+
+                  </button>
+
+
+                  <span class="qty">
+                    ${item.qty}
+                  </span>
+
+
+                  <button
+                    class="qty-btn"
+                    onclick="changeQty(
+                      ${index},
+                      1
+                    )">
+
+                    +
+
+                  </button>
+
+                </div>
+
+              </div>
+
+
+              <button
+                class="btn red"
+                onclick="removeFromCart(
+                  ${index}
+                )">
+
+                Remove
+
+              </button>
+
+            </div>
+
+          `;
+
+        }
+      ).join("");
+
   }
 
 
-  let total = 0;
+  document.getElementById(
+    "total"
+  ).innerText =
+    total.toFixed(2);
 
 
-  box.innerHTML =
-
-    cart.map((item, index) => {
-
-      total +=
-        Number(item.price) *
-        Number(item.qty);
+  document.getElementById(
+    "cartCount"
+  ).innerText =
+    count;
 
 
-      return `
-
-        <div class="cart-item">
-
-          <span>
-
-          💊 ${item.name}
-${
-  item.strength
-    ? ` (${item.strength})`
-    : ""
-}
-<br>
-
-₹${item.price} × ${item.qty}
-
-          </span>
-
-
-          <button
-            class="btn red"
-            onclick="removeFromCart(${index})">
-
-            Remove
-
-          </button>
-
-        </div>
-
-      `;
-
-    }).join("");
-
-
-  document
-    .getElementById("total")
-    .innerText = total;
+  document.getElementById(
+    "stickyTotal"
+  ).innerText =
+    total.toFixed(2);
 
 }
 
 
 /* =========================
    CLEAR CART
-   ========================= */
+========================= */
 
 function clearCart(){
 
@@ -544,14 +1486,16 @@ function clearCart(){
 
 
 /* =========================
-   PRESCRIPTION UPLOAD
-   ========================= */
+   PRESCRIPTION
+========================= */
 
 async function showPrescription(){
 
   const file =
     document
-      .getElementById("prescription")
+      .getElementById(
+        "prescription"
+      )
       .files[0];
 
 
@@ -571,21 +1515,21 @@ async function showPrescription(){
     );
 
 
-    document
-      .getElementById("prescription")
-      .value = "";
+    document.getElementById(
+      "prescription"
+    ).value = "";
 
 
     return;
   }
 
 
-  document
-    .getElementById("fileName")
-    .innerText =
-      "Uploading: " +
-      file.name +
-      "...";
+  document.getElementById(
+    "fileName"
+  ).innerText =
+    "Uploading: " +
+    file.name +
+    "...";
 
 
   try{
@@ -612,8 +1556,8 @@ async function showPrescription(){
           filePath,
           file,
           {
-            cacheControl: "3600",
-            upsert: false
+            cacheControl:"3600",
+            upsert:false
           }
         );
 
@@ -629,30 +1573,27 @@ async function showPrescription(){
       );
 
 
-      document
-        .getElementById("fileName")
-        .innerText =
-          "Upload failed";
+      document.getElementById(
+        "fileName"
+      ).innerText =
+        "Upload failed";
 
 
       return;
     }
 
 
-    document
-      .getElementById("fileName")
-      .innerText =
-        "✅ Uploaded: " +
-        file.name;
+    document.getElementById(
+      "fileName"
+    ).innerText =
+      "✅ Uploaded: " +
+      file.name;
 
 
     window.prescriptionPath =
       filePath;
 
-  }
-
-
-  catch(error){
+  }catch(error){
 
     console.error(error);
 
@@ -669,7 +1610,7 @@ async function showPrescription(){
 
 /* =========================
    PLACE ORDER
-   ========================= */
+========================= */
 
 async function placeOrder(){
 
@@ -685,28 +1626,36 @@ async function placeOrder(){
 
   const name =
     document
-      .getElementById("customerName")
+      .getElementById(
+        "customerName"
+      )
       .value
       .trim();
 
 
   const phone =
     document
-      .getElementById("customerPhone")
+      .getElementById(
+        "customerPhone"
+      )
       .value
       .trim();
 
 
   const address =
     document
-      .getElementById("address")
+      .getElementById(
+        "address"
+      )
       .value
       .trim();
 
 
   const pincode =
     document
-      .getElementById("pincode")
+      .getElementById(
+        "pincode"
+      )
       .value
       .trim();
 
@@ -726,7 +1675,21 @@ async function placeOrder(){
   }
 
 
-  if(!/^\d{6}$/.test(pincode)){
+  if(
+    !/^\d{10}$/.test(phone)
+  ){
+
+    alert(
+      "Please enter a valid 10 digit mobile number."
+    );
+
+    return;
+  }
+
+
+  if(
+    !/^\d{6}$/.test(pincode)
+  ){
 
     alert(
       "Please enter a valid 6 digit pincode."
@@ -738,13 +1701,15 @@ async function placeOrder(){
 
   const file =
     document
-      .getElementById("prescription")
+      .getElementById(
+        "prescription"
+      )
       .files[0];
 
 
   /* =========================
-     1. FIND / CREATE CUSTOMER
-     ========================= */
+     1. CUSTOMER
+  ========================= */
 
   let {
     data: customer,
@@ -759,17 +1724,10 @@ async function placeOrder(){
 
   if(customerError){
 
-    console.error(
-      "Customer search error:",
-      customerError
-    );
-
-
     alert(
       "Customer check failed:\n\n" +
       customerError.message
     );
-
 
     return;
   }
@@ -778,8 +1736,8 @@ async function placeOrder(){
   if(!customer){
 
     const {
-      data: newCustomer,
-      error: createError
+      data:newCustomer,
+      error:createError
     } =
       await supabaseClient
         .from("users")
@@ -801,17 +1759,10 @@ async function placeOrder(){
 
     if(createError){
 
-      console.error(
-        "Customer create error:",
-        createError
-      );
-
-
       alert(
         "Customer save failed:\n\n" +
         createError.message
       );
-
 
       return;
     }
@@ -824,14 +1775,14 @@ async function placeOrder(){
 
 
   /* =========================
-     2. SAVE ADDRESS
-     ========================= */
+     2. ADDRESS
+  ========================= */
 
   const addressId =
     crypto.randomUUID();
 
 
-  const { error: addressError } =
+  const { error:addressError } =
     await supabaseClient
       .from("addresses")
       .insert({
@@ -862,25 +1813,18 @@ async function placeOrder(){
 
   if(addressError){
 
-    console.error(
-      "Address database error:",
-      addressError
-    );
-
-
     alert(
       "Address save failed:\n\n" +
       addressError.message
     );
-
 
     return;
   }
 
 
   /* =========================
-     3. SAVE PRESCRIPTION
-     ========================= */
+     3. PRESCRIPTION
+  ========================= */
 
   let prescriptionId =
     null;
@@ -896,7 +1840,7 @@ async function placeOrder(){
 
 
     const {
-      error: prescriptionError
+      error:prescriptionError
     } =
       await supabaseClient
         .from("prescriptions")
@@ -919,17 +1863,10 @@ async function placeOrder(){
 
     if(prescriptionError){
 
-      console.error(
-        "Prescription database error:",
-        prescriptionError
-      );
-
-
       alert(
         "Prescription database save failed:\n\n" +
         prescriptionError.message
       );
-
 
       return;
     }
@@ -938,44 +1875,19 @@ async function placeOrder(){
 
 
   /* =========================
-     4. CALCULATE TOTAL
-     ========================= */
+     4. TOTAL
+  ========================= */
 
   let total = 0;
 
 
   cart.forEach(item => {
 
-    const price =
-      Number(
-        item.price ??
-        item.sale_price ??
-        0
-      );
-
-
-    const qty =
-      Number(
-        item.qty ?? 0
-      );
-
-
     total +=
-      price * qty;
+      Number(item.price) *
+      Number(item.qty);
 
   });
-
-
-  console.log(
-    "CART:",
-    cart
-  );
-
-
-  console.log(
-    "TOTAL:",
-    total
-  );
 
 
   if(
@@ -983,25 +1895,17 @@ async function placeOrder(){
     total <= 0
   ){
 
-    console.error(
-      "Invalid total:",
-      total
-    );
-
-
     alert(
-      "Order total is invalid: " +
-      total
+      "Order total is invalid."
     );
-
 
     return;
   }
 
 
   /* =========================
-     5. SAVE ORDER
-     ========================= */
+     5. ORDER
+  ========================= */
 
   const orderData = {
 
@@ -1031,7 +1935,7 @@ async function placeOrder(){
   }
 
 
-  const { error: orderError } =
+  const { error:orderError } =
     await supabaseClient
       .from("orders")
       .insert(
@@ -1041,73 +1945,42 @@ async function placeOrder(){
 
   if(orderError){
 
-    console.error(
-      "Order database error:",
-      orderError
-    );
-
-
     alert(
       "Order save failed:\n\n" +
       orderError.message
     );
-
 
     return;
   }
 
 
   /* =========================
-     5A. SAVE ORDER ITEMS
-     ========================= */
+     5A. ORDER ITEMS
+  ========================= */
 
   const orderItems =
-    cart.map(item => {
+    cart.map(item => ({
 
-      const price =
-        Number(
-          item.price ??
-          item.sale_price ??
-          0
-        );
+      id:
+        crypto.randomUUID(),
 
+      order_id:
+        orderData.id,
 
-      const qty =
-        Number(
-          item.qty ?? 0
-        );
+      medicine_id:
+        item.id,
 
+      quantity:
+        Number(item.qty),
 
-      return {
+      unit_price:
+        Number(item.price)
 
-        id:
-          crypto.randomUUID(),
-
-        order_id:
-          orderData.id,
-
-        medicine_id:
-          item.id,
-
-        quantity:
-          qty,
-
-        unit_price:
-          price
-
-      };
-
-    });
-
-
-  console.log(
-    "ORDER ITEMS:",
-    orderItems
-  );
+    }));
 
 
   const {
-    error: orderItemsError
+    error:orderItemsError
   } =
     await supabaseClient
       .from("order_items")
@@ -1118,25 +1991,18 @@ async function placeOrder(){
 
   if(orderItemsError){
 
-    console.error(
-      "Order items database error:",
-      orderItemsError
-    );
-
-
     alert(
       "Order items save failed:\n\n" +
       orderItemsError.message
     );
-
 
     return;
   }
 
 
   /* =========================
-     6. CREATE WHATSAPP MESSAGE
-     ========================= */
+     6. WHATSAPP MESSAGE
+  ========================= */
 
   let message =
     "Hello CHEQUE POOL HEALTH CARE AND MEDICOS,\n\n";
@@ -1186,25 +2052,27 @@ async function placeOrder(){
 
 
     message +=
-  "- 💊 " +
-  item.name +
-  (
-    item.strength
-      ? " (" + item.strength + ")"
-      : ""
-  ) +
-  " × " +
-  item.qty +
-  " = ₹" +
-  amount +
-  "\n";
+      "- 💊 " +
+      item.name +
+      (
+        item.strength
+          ? " (" +
+            item.strength +
+            ")"
+          : ""
+      ) +
+      " × " +
+      item.qty +
+      " = ₹" +
+      amount.toFixed(2) +
+      "\n";
 
   });
 
 
   message +=
     "\nTotal: ₹" +
-    total;
+    total.toFixed(2);
 
 
   if(file){
@@ -1222,7 +2090,7 @@ async function placeOrder(){
 
   /* =========================
      7. OPEN WHATSAPP
-     ========================= */
+  ========================= */
 
   window.open(
 
@@ -1237,8 +2105,39 @@ async function placeOrder(){
 
 
 /* =========================
+   SCROLL CART
+========================= */
+
+function scrollToCart(){
+
+  document
+    .getElementById("cartSection")
+    .scrollIntoView({
+      behavior:"smooth"
+    });
+
+}
+
+
+/* =========================
+   HTML ESCAPE
+========================= */
+
+function escapeHtml(text){
+
+  return String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================
    INITIAL LOAD
-   ========================= */
+========================= */
 
 loadMedicines();
 
