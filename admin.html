@@ -252,7 +252,29 @@ const supabaseClient =
     SUPABASE_URL,
     SUPABASE_KEY
   );
+async function checkAdmin() {
+  const { data, error } =
+    await supabaseClient.auth.getSession();
 
+  if (error || !data.session) {
+    window.location.replace("admin-login.html");
+    return;
+  }
+
+  loadDashboard();
+  loadOrders();
+}
+
+async function logout() {
+  const { error } = await supabaseClient.auth.signOut();
+
+  if (error) {
+    alert("Logout failed: " + error.message);
+    return;
+  }
+
+  window.location.replace("admin-login.html");
+}
     async function loadDashboard(){
 
     const { count: medicineCount, error: medicineError } =
@@ -1168,8 +1190,6 @@ async function viewPrescription(prescriptionId){
   );
 
     }
-
-loadOrders();
 
 checkAdmin();
 </script>
