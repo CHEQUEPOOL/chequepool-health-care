@@ -4,65 +4,81 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <title>Admin Login - Cheque Pool Health Care</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{
-    box-sizing:border-box;
+* {
+    box-sizing: border-box;
 }
 
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f4f7f9;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #f0fdf4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
-.login-box{
-    background:white;
-    width:90%;
-    max-width:400px;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 2px 12px #0002;
+.login-box {
+    background: white;
+    width: 100%;
+    max-width: 400px;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 2px 12px #0002;
 }
 
-h1{
-    text-align:center;
-    color:#087f5b;
-    margin-top:0;
+h1 {
+    text-align: center;
+    color: #087f5b;
+    margin-top: 0;
 }
 
-input{
-    width:100%;
-    padding:13px;
-    margin:8px 0;
-    border:1px solid #ccc;
-    border-radius:8px;
-    font-size:16px;
+input {
+    width: 100%;
+    padding: 13px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
 }
 
-button{
-    width:100%;
-    padding:13px;
-    margin-top:12px;
-    border:0;
-    border-radius:8px;
-    background:#087f5b;
-    color:white;
-    font-size:16px;
-    font-weight:bold;
+button {
+    width: 100%;
+    padding: 13px;
+    margin-top: 12px;
+    border: 0;
+    border-radius: 8px;
+    background: #087f5b;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
-#message{
-    margin-top:15px;
-    text-align:center;
-    color:#c00;
+button:disabled {
+    opacity: 0.6;
+}
+
+.forgot {
+    display: block;
+    margin-top: 16px;
+    text-align: center;
+    color: #087f5b;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#message {
+    margin-top: 15px;
+    text-align: center;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
 }
 </style>
 </head>
@@ -73,111 +89,141 @@ button{
 
     <h1>🔐 Admin Login</h1>
 
-    <input
-        id="email"
-        type="email"
-        placeholder="Admin Email"
-    >
+    <form id="loginForm">
+        <input
+            id="email"
+            type="email"
+            placeholder="Admin Email"
+            autocomplete="username"
+            required
+        >
 
-    <input
-        id="password"
-        type="password"
-        placeholder="Password"
-    >
+        <input
+            id="password"
+            type="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            required
+        >
 
-    <button onclick="login()">
-        Login
-    </button>
+        <button type="submit" id="loginButton">
+            Login
+        </button>
+    </form>
 
-    <div id="message"></div>
+    <a class="forgot" href="#" id="forgotLink">
+        Forgot Password?
+    </a>
+
+    <div id="message" role="status" aria-live="polite"></div>
 
 </div>
 
 <script>
-
 const SUPABASE_URL =
-"https://ymhaxeferrpyhuavzcgu.supabase.co";
+    "https://ymhaxeferrpyhuavzcgu.supabase.co";
 
 const SUPABASE_KEY =
-"sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
+    "sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
 
-const supabaseClient =
-window.supabase.createClient(
+const RESET_PAGE =
+    "https://chequepool.github.io/chequepool-health-care/reset-password.html";
+
+const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
-async function checkAdmin(){
 
-    const { data: { session } } =
-        await supabaseClient.auth.getSession();
+const message = document.getElementById("message");
+const loginButton = document.getElementById("loginButton");
 
-    if(!session){
-
-        window.location.href = "admin-login.html";
-
-        return;
-    }
-
-    loadDashboard();
-    loadOrders();
+function showMessage(text, success = false) {
+    message.textContent = text;
+    message.style.color = success ? "#166534" : "#b91c1c";
 }
 
+document.getElementById("loginForm").addEventListener(
+    "submit",
+    async function(event) {
+        event.preventDefault();
 
-async function logout(){
+        const email =
+            document.getElementById("email").value.trim();
 
-    await supabaseClient.auth.signOut();
+        const password =
+            document.getElementById("password").value;
 
-    window.location.href = "admin-login.html";
-}
-    
-checkAdmin();
-    
-async function login(){
+        showMessage("");
+        loginButton.disabled = true;
+        loginButton.textContent = "Logging in...";
 
-    const email =
-        document.getElementById("email").value.trim();
+        try {
+            const { data, error } =
+                await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
 
-    const password =
-        document.getElementById("password").value;
+            if (error) throw error;
 
-    const message =
-        document.getElementById("message");
-
-    message.textContent = "";
-
-    if(!email || !password){
-
-        message.textContent =
-            "Please enter email and password.";
-
-        return;
+            if (data.session) {
+                window.location.href = "admin.html";
+            }
+        } catch (error) {
+            showMessage(error.message || "Login failed.");
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = "Login";
+        }
     }
+);
 
-    const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+document.getElementById("forgotLink").addEventListener(
+    "click",
+    async function(event) {
+        event.preventDefault();
 
-    if(error){
+        const email =
+            document.getElementById("email").value.trim();
 
-        console.error(error);
+        if (!email) {
+            showMessage(
+                "Pehle Admin Email box mein apna email likhiye."
+            );
+            document.getElementById("email").focus();
+            return;
+        }
 
-        message.textContent =
-            error.message;
+        const forgotButton = document.getElementById("forgotLink");
+        forgotButton.style.pointerEvents = "none";
 
-        return;
+        showMessage("Password reset email bheja ja raha hai...", true);
+
+        try {
+            const { error } =
+                await supabaseClient.auth.resetPasswordForEmail(
+                    email,
+                    {
+                        redirectTo: RESET_PAGE
+                    }
+                );
+
+            if (error) throw error;
+
+            showMessage(
+                "Agar is email par account hai, to password reset email bhej diya gaya hai. Inbox check karein.",
+                true
+            );
+        } catch (error) {
+            showMessage(
+                error.message || "Reset email nahi bheja ja saka."
+            );
+        } finally {
+            forgotButton.style.pointerEvents = "auto";
+        }
     }
-
-    if(data.session){
-
-        window.location.href = "admin.html";
-
-    }
-
-}
-
+);
 </script>
 
 </body>
-  </html>
+    </html>
