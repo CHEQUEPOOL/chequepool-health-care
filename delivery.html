@@ -233,42 +233,80 @@ function renderOrders() {
   });
 }
 
+
 async function saveDeliveryStatus(orderId) {
-  const { data, error: sessionError } = await supabaseClient.auth.getSession();
+  showMessage("Please wait... Delivery status save ho raha hai.");
 
-  if (sessionError || !data.session) {
-    window.location.replace("admin-login.html");
-    return;
+  try {
+    const { data, error: sessionError } =
+      await supabaseClient.auth.getSession();
+
+    if (sessionError || !data.session) {
+      showMessage("Admin session nahi mila. Login karein.", true);
+      window.location.replace("admin-login.html");
+      return;
+    }
+
+    const select = document.getElementById("status-" + orderId);
+
+    if (!select) {
+      showMessage("Status dropdown nahi mila.", true);
+      return;
+    }
+
+    const newStatus = select.value;
+    const allowed = [
+      "PENDING",
+      "PACKED",
+      "OUT_FOR_DELIVERY",
+      "DELIVERED"
+    ];
+
+    if (!allowed.includes(newStatus)) {
+      showMessage("Invalid delivery status.", true);
+      return;
+    }
+
+    const { data: updatedRows, error } = await supabaseClient
+      .from("orders")
+      .update({ delivery_status: newStatus })
+      .eq("id", orderId)
+      .select("id, delivery_status");
+
+    if (error) {
+      console.error("Delivery status update error:", error);
+      showMessage("Status save nahi hua: " + error.message, true);
+      return;
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      showMessage(
+        "Status update confirm nahi hua. Supabase RLS policy aur UPDATE permission check karni hogi.",
+        true
+      );
+      return;
+    }
+
+    const order = allOrders.find(
+      item => String(item.id) === String(orderId)
+    );
+
+    if (order) {
+      order.delivery_status = updatedRows[0].delivery_status;
+    }
+
+    showMessage("✅ Delivery Status updated: " + newStatus);
+    renderOrders();
+
+  } catch (err) {
+    console.error("Unexpected delivery error:", err);
+    showMessage(
+      "Unexpected error: " + (err.message || String(err)),
+      true
+    );
   }
-
-  const select = document.getElementById("status-" + orderId);
-  if (!select) return;
-
-  const newStatus = select.value;
-  const allowed = ["PENDING", "PACKED", "OUT_FOR_DELIVERY", "DELIVERED"];
-
-  if (!allowed.includes(newStatus)) {
-    showMessage("Invalid delivery status.", true);
-    return;
-  }
-
-  const { error } = await supabaseClient
-    .from("orders")
-    .update({ delivery_status: newStatus })
-    .eq("id", orderId);
-
-  if (error) {
-    console.error(error);
-    showMessage("Status save नहीं हुआ: " + error.message, true);
-    return;
-  }
-
-  const order = allOrders.find(item => String(item.id) === String(orderId));
-  if (order) order.delivery_status = newStatus;
-
-  showMessage("Delivery Status updated: " + newStatus);
-  renderOrders();
 }
+  
 
 checkAdmin();
 </script>
