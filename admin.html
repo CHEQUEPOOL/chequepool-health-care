@@ -331,9 +331,16 @@ async function logout() {
 }
 
 loadDashboard();
+
 function showMessage(name){
+
+    if(name === "Delivery"){
+        window.location.href = "delivery.html";
+        return;
+    }
+
     alert(name + " section will be connected next.");
-}
+    }
 
 async function logout(){
 
