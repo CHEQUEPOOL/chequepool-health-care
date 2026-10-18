@@ -335,8 +335,27 @@ function showMessage(name){
     alert(name + " section will be connected next.");
 }
 
-function logout(){
-    alert("Admin logout will be connected with secure login.");
+async function logout(){
+
+    const confirmLogout = confirm(
+        "Kya aap Admin se Logout karna chahte hain?"
+    );
+
+    if(!confirmLogout){
+        return;
+    }
+
+    const { error } = await supabaseClient.auth.signOut();
+
+    if(error){
+        alert(
+            "Logout nahi ho paaya.\n\n" +
+            error.message
+        );
+        return;
+    }
+
+    window.location.href = "admin-login.html";
 }
 
     async function loadOrders(){
