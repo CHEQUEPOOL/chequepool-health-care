@@ -1735,52 +1735,41 @@ async function placeOrder(){
 
   if(!customer){
 
-    const {
-      data:newCustomer,
-      error:createError
-    } =
+    const newCustomerId = crypto.randomUUID();
+
+    const { error: createError } =
       await supabaseClient
         .from("users")
         .insert({
-
-          id:
-            crypto.randomUUID(),
-
-          name:
-            name,
-
-          phone:
-            phone
-
-        })
-        .select("id")
-        .single();
-
+          id: newCustomerId,
+          name: name,
+          phone: phone
+        });
 
     if(createError){
 
-  console.error(
-  "Customer save error:",
-  JSON.stringify(createError, null, 2)
-);
+      console.error(
+        "Customer save error:",
+        JSON.stringify(createError, null, 2)
+      );
 
-  alert(
-    "Customer save failed\n\n" +
-    "Message: " + createError.message + "\n\n" +
-    "Code: " + (createError.code || "N/A") + "\n\n" +
-    "Details: " + (createError.details || "N/A") + "\n\n" +
-    "Hint: " + (createError.hint || "N/A")
-  );
+      alert(
+        "Customer save failed\n\n" +
+        "Message: " + createError.message + "\n\n" +
+        "Code: " + (createError.code || "N/A") + "\n\n" +
+        "Details: " + (createError.details || "N/A") + "\n\n" +
+        "Hint: " + (createError.hint || "N/A")
+      );
 
-  return;
+      return;
     }
 
-
-    customer =
-      newCustomer;
+    customer = {
+      id: newCustomerId
+    };
 
   }
-
+    
 
   /* =========================
      2. ADDRESS
