@@ -1759,12 +1759,17 @@ async function placeOrder(){
 
     if(createError){
 
-      alert(
-        "Customer save failed:\n\n" +
-        createError.message
-      );
+  console.error("Customer save error:", createError);
 
-      return;
+  alert(
+    "Customer save failed\n\n" +
+    "Message: " + createError.message + "\n\n" +
+    "Code: " + (createError.code || "N/A") + "\n\n" +
+    "Details: " + (createError.details || "N/A") + "\n\n" +
+    "Hint: " + (createError.hint || "N/A")
+  );
+
+  return;
     }
 
 
