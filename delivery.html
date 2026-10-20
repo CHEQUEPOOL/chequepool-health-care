@@ -1,52 +1,200 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Delivery Management - Cheque Pool Health Care</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f3f7f4;color:#222}
-header{background:#087f5b;color:white;padding:16px}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f7f4;
+  color:#222;
+}
+
+header{
+  background:#087f5b;
+  color:white;
+  padding:16px;
+  overflow:hidden;
+}
+
 header h2{margin:0 0 10px}
-header a{color:white;margin-right:15px}
-main{max-width:1100px;margin:20px auto;padding:12px}
-.card{background:white;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px #0001}
-input,select,button{padding:10px;border:1px solid #ccc;border-radius:6px;font-size:15px}
-input{width:100%;margin-bottom:12px}
-button{cursor:pointer;background:#087f5b;color:white;border:0}
-table{width:100%;border-collapse:collapse;background:white}
-th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
-th{background:#e6f4ec}
+
+header a{
+  color:white;
+  margin-right:15px;
+}
+
+main{
+  max-width:1100px;
+  margin:20px auto;
+  padding:12px;
+}
+
+.card{
+  background:white;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:18px;
+  box-shadow:0 2px 8px #0001;
+}
+
+input,select,button{
+  padding:10px;
+  border:1px solid #ccc;
+  border-radius:6px;
+  font-size:15px;
+}
+
+input{
+  width:100%;
+  margin-bottom:12px;
+}
+
+button{
+  cursor:pointer;
+  background:#087f5b;
+  color:white;
+  border:0;
+}
+
+button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 .table-wrap{overflow-x:auto}
-.small{color:#666;font-size:13px}
-.status-select{min-width:165px;margin-bottom:7px}
+
+table{
+  width:100%;
+  min-width:760px;
+  border-collapse:collapse;
+  background:white;
+}
+
+th,td{
+  padding:10px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
+  vertical-align:top;
+}
+
+th{background:#e6f4ec}
+
+.small{
+  color:#666;
+  font-size:13px;
+}
+
+.status-select{
+  min-width:165px;
+  margin-bottom:7px;
+  display:block;
+}
+
 .save-btn{display:block}
-#message{margin:10px 0;font-weight:bold}
-@media(max-width:600px){header h2{font-size:20px}th,td{padding:8px;font-size:13px}}
+
+#message{
+  margin:12px 0;
+  font-weight:bold;
+  overflow-wrap:anywhere;
+}
+
+.count{
+  display:inline-block;
+  background:#e6f4ec;
+  color:#087f5b;
+  padding:8px 12px;
+  border-radius:8px;
+  margin:4px 4px 4px 0;
+  font-weight:bold;
+}
+
+.section-title{
+  margin-top:0;
+  color:#087f5b;
+}
+
+.empty{
+  text-align:center;
+  padding:20px;
+  color:#666;
+}
+
+@media(max-width:600px){
+  header h2{font-size:19px}
+  main{padding:8px}
+  .card{padding:12px}
+}
 </style>
 </head>
 
 <body>
+
 <header>
   <h2>🚚 CHEQUE POOL HEALTH CARE</h2>
+
   <a href="admin.html">← Admin Dashboard</a>
-  <button onclick="logout()" style="float:right;background:#b42318">Logout</button>
+
+  <button
+    onclick="logout()"
+    style="float:right;background:#b42318">
+    Logout
+  </button>
 </header>
 
 <main>
-  <div class="card">
-    <h3>🚚 Delivery Management</h3>
-    <p>ऑर्डर की डिलीवरी स्थिति देखें और अपडेट करें।</p>
-    <input id="search" placeholder="Customer name, phone या order ID खोजें" oninput="renderOrders()">
-    <button onclick="loadOrders()">🔄 Refresh Orders</button>
-    <div id="message"></div>
-  </div>
 
   <div class="card">
+    <h3>🚚 Delivery Management</h3>
+
+    <p>
+      केवल Approved Orders की डिलीवरी स्थिति देखें और अपडेट करें।
+    </p>
+
+    <div>
+      <span class="count">
+        📦 Active: <span id="activeCount">0</span>
+      </span>
+
+      <span class="count">
+        ✅ Delivered: <span id="deliveredCount">0</span>
+      </span>
+    </div>
+
+    <br>
+
+    <input
+      id="search"
+      placeholder="Customer name, phone या order ID खोजें"
+      oninput="renderOrders()">
+
+    <button onclick="loadOrders()">
+      🔄 Refresh Orders
+    </button>
+
+    <div id="message" aria-live="polite"></div>
+  </div>
+
+
+  <!-- ACTIVE DELIVERY ORDERS -->
+
+  <div class="card">
+    <h3 class="section-title">
+      📦 Approved Orders — Active Delivery
+    </h3>
+
+    <p class="small">
+      इन ऑर्डर की डिलीवरी स्थिति यहाँ अपडेट करें।
+    </p>
+
     <div class="table-wrap">
       <table>
         <thead>
@@ -58,18 +206,63 @@ th{background:#e6f4ec}
             <th>Delivery Status</th>
           </tr>
         </thead>
-        <tbody id="deliveryRows">
-          <tr><td colspan="5">Loading orders...</td></tr>
+
+        <tbody id="activeRows">
+          <tr>
+            <td colspan="5">Loading orders...</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </div>
-  <p class="small">Delivery Status, Order Status से अलग है। Delivered चुनने से Order Status अपने-आप नहीं बदलेगा।</p>
+
+
+  <!-- DELIVERED ORDERS -->
+
+  <div class="card">
+    <h3 class="section-title">
+      ✅ Delivered Orders
+    </h3>
+
+    <p class="small">
+      सफलतापूर्वक Delivered हुए ऑर्डर यहाँ दिखाई देंगे।
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Customer / Order</th>
+            <th>Address</th>
+            <th>Total</th>
+            <th>Order Status</th>
+            <th>Delivery Status</th>
+          </tr>
+        </thead>
+
+        <tbody id="deliveredRows">
+          <tr>
+            <td colspan="5">Loading orders...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="small">
+    नोट: Delivery Status और Order Status अलग-अलग हैं।
+    Delivered करने से Order Status अपने-आप नहीं बदलेगा।
+  </p>
+
 </main>
 
+
 <script>
-const SUPABASE_URL = "https://ymhaxeferrpyhuavzcgu.supabase.co";
-const SUPABASE_KEY = "sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
+const SUPABASE_URL =
+  "https://ymhaxeferrpyhuavzcgu.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_oW6iGlVz8JhV6tpwm_SrKQ_sDlHBedX";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
@@ -77,238 +270,519 @@ const supabaseClient = window.supabase.createClient(
 );
 
 let allOrders = [];
+let loadingOrders = false;
+let savingOrders = new Set();
+
 
 function showMessage(message, isError = false) {
   const el = document.getElementById("message");
+
   el.textContent = message;
-  el.style.color = isError ? "#b42318" : "#087f5b";
+
+  el.style.color = isError
+    ? "#b42318"
+    : "#087f5b";
 }
 
+
+function normalizeStatus(status) {
+  return String(status || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+
+function isApproved(order) {
+  return (
+    normalizeStatus(order.status) === "APPROVED" ||
+    normalizeStatus(order.order_status) === "APPROVED"
+  );
+}
+
+
 async function checkAdmin() {
-  const { data, error } = await supabaseClient.auth.getSession();
+  const { data, error } =
+    await supabaseClient.auth.getSession();
 
   if (error || !data.session) {
     window.location.replace("admin-login.html");
     return;
   }
 
-  loadOrders();
+  await loadOrders();
 }
 
+
 async function logout() {
-  const { error } = await supabaseClient.auth.signOut();
+  const { error } =
+    await supabaseClient.auth.signOut();
 
   if (error) {
-    showMessage("Logout failed: " + error.message, true);
+    showMessage(
+      "Logout failed: " + error.message,
+      true
+    );
     return;
   }
 
   window.location.replace("admin-login.html");
 }
 
+
 async function loadOrders() {
-  showMessage("Loading orders...");
+  if (loadingOrders) return;
 
-  const { data: orders, error } = await supabaseClient
-    .from("orders")
-    .select("id,user_id,address_id,total,total_amount,status,order_status,payment_status,delivery_status,created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  loadingOrders = true;
 
-  if (error) {
-    console.error(error);
-    showMessage("Orders load नहीं हुए: " + error.message, true);
-    return;
-  }
+  showMessage("🔄 Orders load हो रहे हैं...");
 
-  allOrders = [];
+  try {
+    const { data: orders, error } =
+      await supabaseClient
+        .from("orders")
+        .select(`
+          id,
+          user_id,
+          address_id,
+          total,
+          total_amount,
+          status,
+          order_status,
+          payment_status,
+          delivery_status,
+          created_at
+        `)
+        .order("created_at", {
+          ascending: false
+        })
+        .limit(100);
 
-  for (const order of (orders || [])) {
-    let customerName = "Customer";
-    let phone = "-";
-    let addressText = "-";
+    if (error) {
+      console.error(error);
 
-    if (order.user_id) {
-      const { data: user } = await supabaseClient
-        .from("users")
-        .select("name,phone")
-        .eq("id", order.user_id)
-        .maybeSingle();
+      showMessage(
+        "Orders load नहीं हुए: " + error.message,
+        true
+      );
 
-      if (user) {
-        customerName = user.name || customerName;
-        phone = user.phone || phone;
-      }
+      return;
     }
 
-    if (order.address_id) {
-      const { data: address } = await supabaseClient
-        .from("addresses")
-        .select("recipient_name,phone,address,city,pincode")
-        .eq("id", order.address_id)
-        .maybeSingle();
+    const result = [];
 
-      if (address) {
-        customerName = customerName === "Customer"
-          ? (address.recipient_name || customerName)
-          : customerName;
-        phone = phone === "-" ? (address.phone || phone) : phone;
-        addressText = [
-          address.address,
-          address.city,
-          address.pincode
-        ].filter(Boolean).join(", ") || "-";
+    for (const order of (orders || [])) {
+      let customerName = "Customer";
+      let phone = "-";
+      let addressText = "-";
+
+      if (order.user_id) {
+        const { data: user, error: userError } =
+          await supabaseClient
+            .from("users")
+            .select("name,phone")
+            .eq("id", order.user_id)
+            .maybeSingle();
+
+        if (userError) {
+          console.error(userError);
+        }
+
+        if (user) {
+          customerName = user.name || customerName;
+          phone = user.phone || phone;
+        }
       }
+
+      if (order.address_id) {
+        const { data: address, error: addressError } =
+          await supabaseClient
+            .from("addresses")
+            .select(
+              "recipient_name,phone,address,city,pincode"
+            )
+            .eq("id", order.address_id)
+            .maybeSingle();
+
+        if (addressError) {
+          console.error(addressError);
+        }
+
+        if (address) {
+          if (customerName === "Customer") {
+            customerName =
+              address.recipient_name || customerName;
+          }
+
+          if (phone === "-") {
+            phone = address.phone || phone;
+          }
+
+          addressText = [
+            address.address,
+            address.city,
+            address.pincode
+          ].filter(Boolean).join(", ") || "-";
+        }
+      }
+
+      result.push({
+        ...order,
+        customerName,
+        phone,
+        addressText,
+        delivery_status:
+          order.delivery_status || "PENDING"
+      });
     }
 
-    allOrders.push({
-      ...order,
-      customerName,
-      phone,
-      addressText,
-      delivery_status: order.delivery_status || "PENDING"
-    });
-  }
+    allOrders = result;
 
-  renderOrders();
-  showMessage(allOrders.length + " orders loaded.");
+    renderOrders();
+
+    const approvedCount =
+      allOrders.filter(isApproved).length;
+
+    showMessage(
+      "✅ Orders refreshed. Approved Orders: " +
+      approvedCount
+    );
+
+  } catch (err) {
+    console.error(err);
+
+    showMessage(
+      "Unexpected error: " +
+      (err.message || String(err)),
+      true
+    );
+
+  } finally {
+    loadingOrders = false;
+  }
 }
+
 
 function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[ch]));
+  return String(value ?? "").replace(
+    /[&<>"']/g,
+    ch => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[ch])
+  );
 }
 
-function renderOrders() {
-  const tbody = document.getElementById("deliveryRows");
-  const search = document.getElementById("search").value.trim().toLowerCase();
 
-  const filtered = allOrders.filter(order =>
+function renderOrders() {
+  const activeRows =
+    document.getElementById("activeRows");
+
+  const deliveredRows =
+    document.getElementById("deliveredRows");
+
+  const search =
+    document.getElementById("search")
+      .value.trim().toLowerCase();
+
+  // Only Approved orders are eligible for delivery.
+
+  const approvedOrders = allOrders.filter(order =>
+    isApproved(order)
+  );
+
+  const matchesSearch = order =>
     [
       order.customerName,
       order.phone,
       order.id,
       order.addressText
-    ].some(value => String(value || "").toLowerCase().includes(search))
-  );
+    ].some(value =>
+      String(value || "")
+        .toLowerCase()
+        .includes(search)
+    );
 
-  if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="5">No matching orders found.</td></tr>';
-    return;
+  const activeOrders = approvedOrders.filter(order =>
+    normalizeStatus(order.delivery_status) !==
+      "DELIVERED"
+  ).filter(matchesSearch);
+
+  const deliveredOrders = approvedOrders.filter(order =>
+    normalizeStatus(order.delivery_status) ===
+      "DELIVERED"
+  ).filter(matchesSearch);
+
+  document.getElementById("activeCount")
+    .textContent = approvedOrders.filter(order =>
+      normalizeStatus(order.delivery_status) !==
+      "DELIVERED"
+    ).length;
+
+  document.getElementById("deliveredCount")
+    .textContent = approvedOrders.filter(order =>
+      normalizeStatus(order.delivery_status) ===
+      "DELIVERED"
+    ).length;
+
+
+  function renderTableRows(orders, showControls) {
+    if (!orders.length) {
+      return `
+        <tr>
+          <td colspan="5" class="empty">
+            ${
+              search
+                ? "कोई matching order नहीं मिला।"
+                : "अभी कोई order नहीं है।"
+            }
+          </td>
+        </tr>
+      `;
+    }
+
+    return orders.map(order => {
+      const id = escapeHTML(order.id);
+
+      const status =
+        normalizeStatus(order.delivery_status);
+
+      const orderStatus =
+        normalizeStatus(
+          order.status || order.order_status
+        ) || "APPROVED";
+
+      const total =
+        Number(
+          order.total ?? order.total_amount ?? 0
+        );
+
+      const options = `
+        <option value="PENDING"
+          ${status === "PENDING" ? "selected" : ""}>
+          Pending
+        </option>
+
+        <option value="PACKED"
+          ${status === "PACKED" ? "selected" : ""}>
+          Packed
+        </option>
+
+        <option value="OUT_FOR_DELIVERY"
+          ${status === "OUT_FOR_DELIVERY" ? "selected" : ""}>
+          Out for Delivery
+        </option>
+
+        <option value="DELIVERED"
+          ${status === "DELIVERED" ? "selected" : ""}>
+          Delivered
+        </option>
+      `;
+
+      const deliveryCell = showControls
+        ? `
+          <select
+            class="status-select"
+            id="status-${id}"
+            ${savingOrders.has(String(order.id))
+              ? "disabled"
+              : ""}>
+            ${options}
+          </select>
+
+          <button
+            class="save-btn"
+            data-id="${id}"
+            ${savingOrders.has(String(order.id))
+              ? "disabled"
+              : ""}>
+            Save Status
+          </button>
+        `
+        : `
+          <b>✅ Delivered</b>
+        `;
+
+      return `
+        <tr>
+          <td>
+            <b>${escapeHTML(order.customerName)}</b>
+            <br>
+            ${escapeHTML(order.phone)}
+            <br>
+            <span class="small">
+              Order: ${id}
+            </span>
+          </td>
+
+          <td>${escapeHTML(order.addressText)}</td>
+
+          <td>₹${total.toFixed(2)}</td>
+
+          <td>${escapeHTML(orderStatus)}</td>
+
+          <td>${deliveryCell}</td>
+        </tr>
+      `;
+    }).join("");
   }
 
-  tbody.innerHTML = filtered.map(order => {
-    const id = escapeHTML(order.id);
-    const status = order.delivery_status;
 
-    return `
-      <tr>
-        <td>
-          <b>${escapeHTML(order.customerName)}</b><br>
-          ${escapeHTML(order.phone)}<br>
-          <span class="small">Order: ${id}</span>
-        </td>
-        <td>${escapeHTML(order.addressText)}</td>
-        <td>₹${Number(order.total ?? order.total_amount ?? 0)}</td>
-        <td>${escapeHTML(order.status || order.order_status || "PENDING")}</td>
-        <td>
-          <select class="status-select" id="status-${id}">
-            <option value="PENDING" ${status === "PENDING" ? "selected" : ""}>Pending</option>
-            <option value="PACKED" ${status === "PACKED" ? "selected" : ""}>Packed</option>
-            <option value="OUT_FOR_DELIVERY" ${status === "OUT_FOR_DELIVERY" ? "selected" : ""}>Out for Delivery</option>
-            <option value="DELIVERED" ${status === "DELIVERED" ? "selected" : ""}>Delivered</option>
-          </select>
-          <button class="save-btn" data-id="${id}">Save Status</button>
-        </td>
-      </tr>`;
-  }).join("");
+  activeRows.innerHTML =
+    renderTableRows(activeOrders, true);
 
-  tbody.querySelectorAll(".save-btn").forEach(button => {
-    button.addEventListener("click", () => saveDeliveryStatus(button.dataset.id));
-  });
+  deliveredRows.innerHTML =
+    renderTableRows(deliveredOrders, false);
+
+
+  activeRows.querySelectorAll(".save-btn")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        saveDeliveryStatus(button.dataset.id);
+      });
+    });
 }
 
 
 async function saveDeliveryStatus(orderId) {
-  showMessage("Please wait... Delivery status save ho raha hai.");
+  const key = String(orderId);
+
+  if (savingOrders.has(key)) return;
+
+  const order = allOrders.find(
+    item => String(item.id) === key
+  );
+
+  if (!order) {
+    showMessage("Order नहीं मिला।", true);
+    return;
+  }
+
+  // Prevent delivery updates for non-approved orders.
+
+  if (!isApproved(order)) {
+    showMessage(
+      "केवल Approved Orders का Delivery Status बदल सकते हैं।",
+      true
+    );
+
+    return;
+  }
+
+  const select =
+    document.getElementById("status-" + orderId);
+
+  if (!select) {
+    showMessage(
+      "Status dropdown नहीं मिला। Refresh करें।",
+      true
+    );
+
+    return;
+  }
+
+  const newStatus = select.value;
+
+  const allowed = [
+    "PENDING",
+    "PACKED",
+    "OUT_FOR_DELIVERY",
+    "DELIVERED"
+  ];
+
+  if (!allowed.includes(newStatus)) {
+    showMessage("Invalid delivery status.", true);
+    return;
+  }
+
+  savingOrders.add(key);
+
+  renderOrders();
+
+  showMessage("Status save हो रहा है...");
 
   try {
     const { data, error: sessionError } =
       await supabaseClient.auth.getSession();
 
     if (sessionError || !data.session) {
-      showMessage("Admin session nahi mila. Login karein.", true);
+      showMessage(
+        "Admin session नहीं मिला। Login करें।",
+        true
+      );
+
       window.location.replace("admin-login.html");
       return;
     }
 
-    const select = document.getElementById("status-" + orderId);
-
-    if (!select) {
-      showMessage("Status dropdown nahi mila.", true);
-      return;
-    }
-
-    const newStatus = select.value;
-    const allowed = [
-      "PENDING",
-      "PACKED",
-      "OUT_FOR_DELIVERY",
-      "DELIVERED"
-    ];
-
-    if (!allowed.includes(newStatus)) {
-      showMessage("Invalid delivery status.", true);
-      return;
-    }
-
-    const { data: updatedRows, error } = await supabaseClient
-      .from("orders")
-      .update({ delivery_status: newStatus })
-      .eq("id", orderId)
-      .select("id, delivery_status");
+    const { data: updatedRows, error } =
+      await supabaseClient
+        .from("orders")
+        .update({
+          delivery_status: newStatus
+        })
+        .eq("id", orderId)
+        .select("id,delivery_status");
 
     if (error) {
-      console.error("Delivery status update error:", error);
-      showMessage("Status save nahi hua: " + error.message, true);
+      console.error(
+        "Delivery status update error:",
+        error
+      );
+
+      showMessage(
+        "Status save नहीं हुआ: " + error.message,
+        true
+      );
+
       return;
     }
 
     if (!updatedRows || updatedRows.length === 0) {
       showMessage(
-        "Status update confirm nahi hua. Supabase RLS policy aur UPDATE permission check karni hogi.",
+        "Status update confirm नहीं हुआ। " +
+        "Supabase UPDATE permission/RLS policy जाँचें।",
         true
       );
+
       return;
     }
 
-    const order = allOrders.find(
-      item => String(item.id) === String(orderId)
+    const updatedOrder = allOrders.find(
+      item => String(item.id) === key
     );
 
-    if (order) {
-      order.delivery_status = updatedRows[0].delivery_status;
+    if (updatedOrder) {
+      updatedOrder.delivery_status =
+        updatedRows[0].delivery_status;
     }
 
-    showMessage("✅ Delivery Status updated: " + newStatus);
-    renderOrders();
+    showMessage(
+      "✅ Delivery Status updated: " +
+      updatedRows[0].delivery_status
+    );
 
   } catch (err) {
-    console.error("Unexpected delivery error:", err);
+    console.error(err);
+
     showMessage(
-      "Unexpected error: " + (err.message || String(err)),
+      "Unexpected error: " +
+      (err.message || String(err)),
       true
     );
+
+  } finally {
+    savingOrders.delete(key);
+    renderOrders();
   }
 }
-  
+
 
 checkAdmin();
 </script>
+
 </body>
-</html>
+  </html>
