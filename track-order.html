@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Track Order - CHEQUE POOL HEALTH CARE</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f8f4;
+      color: #18352a;
+    }
+
+    header {
+      background: #087443;
+      color: white;
+      padding: 18px 15px;
+      text-align: center;
+    }
+
+    header h2 {
+      margin: 0;
+      font-size: 21px;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 520px;
+      margin: 28px auto;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px #00000012;
+    }
+
+    h3 {
+      margin-top: 0;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-top: 17px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      margin-top: 7px;
+      border: 1px solid #cbd5ce;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      background: #087443;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .notice {
+      background: #fff8e5;
+      border: 1px solid #f1d58a;
+      padding: 13px;
+      border-radius: 8px;
+      line-height: 1.6;
+      font-size: 14px;
+      margin-top: 18px;
+    }
+
+    .back {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #087443;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    #message {
+      margin-top: 15px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #65736b;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h2>💊 CHEQUE POOL HEALTH CARE</h2>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h3>📦 Track Your Order</h3>
+
+    <p style="text-align:center">
+      अपने ऑर्डर की स्थिति जानने के लिए विवरण भरें।
+    </p>
+
+    <form id="trackingForm">
+      <label for="orderId">Order ID</label>
+      <input
+        id="orderId"
+        type="text"
+        placeholder="अपना Order ID डालें"
+        required
+        autocomplete="off"
+      >
+
+      <label for="phone">Registered Mobile Number</label>
+      <input
+        id="phone"
+        type="tel"
+        inputmode="numeric"
+        maxlength="10"
+        pattern="[0-9]{10}"
+        placeholder="10 अंकों का मोबाइल नंबर"
+        required
+      >
+
+      <button type="submit">🔍 Track Order</button>
+    </form>
+
+    <div id="message" role="status" aria-live="polite"></div>
+
+    <div class="notice">
+      🔒 आपकी ऑर्डर जानकारी सुरक्षित रखने के लिए सत्यापन आवश्यक है।
+      अभी ट्रैकिंग सेवा सेटअप की जा रही है।
+    </div>
+
+    <a
+      class="back"
+      href="https://chequepool.github.io/chequepool-health-care/"
+    >
+      ← वापस Medicine Store पर जाएँ
+    </a>
+  </div>
+</div>
+
+<footer>
+  © 2026 CHEQUE POOL HEALTH CARE AND MEDICOS
+</footer>
+
+<script>
+  document
+    .getElementById("trackingForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const orderId =
+        document.getElementById("orderId").value.trim();
+
+      const phone =
+        document.getElementById("phone").value.trim();
+
+      const message =
+        document.getElementById("message");
+
+      if (!orderId) {
+        message.textContent = "कृपया Order ID भरें।";
+        return;
+      }
+
+      if (!/^[0-9]{10}$/.test(phone)) {
+        message.textContent =
+          "कृपया सही 10 अंकों का मोबाइल नंबर भरें।";
+        return;
+      }
+
+      message.textContent =
+        "ट्रैकिंग सेवा अभी सेटअप की जा रही है। " +
+        "ऑर्डर की जानकारी उपलब्ध कराने से पहले सुरक्षित " +
+        "सत्यापन सेटअप करना होगा।";
+    });
+</script>
+
+</body>
+</html>
