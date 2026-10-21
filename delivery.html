@@ -294,7 +294,7 @@ function normalizeStatus(status) {
 
 function isApproved(order) {
   return (
-    normalizeStatus(order.status) === "APPROVED" ||
+    normalizeStatus(order.status) === "APPROVED" &&
     normalizeStatus(order.order_status) === "APPROVED"
   );
 }
@@ -717,14 +717,59 @@ async function saveDeliveryStatus(orderId) {
       return;
     }
 
-    const { data: updatedRows, error } =
-      await supabaseClient
-        .from("orders")
-        .update({
-          delivery_status: newStatus
-        })
-        .eq("id", orderId)
-        .select("id,delivery_status");
+    // पहले Supabase से Order Status दोबारा जाँचें
+const { data: freshOrder, error: checkError } =
+  await supabaseClient
+    .from("orders")
+    .select("id,status,order_status,delivery_status")
+    .eq("id", orderId)
+    .maybeSingle();
+
+if (checkError || !freshOrder) {
+  showMessage(
+    "Order की ताज़ा स्थिति जाँच नहीं पाए। कृपया Refresh करें।",
+    true
+  );
+  return;
+}
+
+// दोनों Order Status APPROVED होने चाहिए
+if (
+  normalizeStatus(freshOrder.status) !== "APPROVED" ||
+  normalizeStatus(freshOrder.order_status) !== "APPROVED"
+) {
+  showMessage(
+    "यह ऑर्डर APPROVED नहीं है। Delivery Status नहीं बदला गया।",
+    true
+  );
+
+  await loadOrders();
+  return;
+}
+
+// पहले से DELIVERED ऑर्डर को दोबारा न बदलें
+if (
+  normalizeStatus(freshOrder.delivery_status) === "DELIVERED" &&
+  newStatus !== "DELIVERED"
+) {
+  showMessage(
+    "यह ऑर्डर पहले ही DELIVERED है।",
+    true
+  );
+
+  await loadOrders();
+  return;
+}
+
+// अब Delivery Status सेव करें
+const { data: updatedRows, error } =
+  await supabaseClient
+    .from("orders")
+    .update({
+      delivery_status: newStatus
+    })
+    .eq("id", orderId)
+    .select("id,delivery_status");
 
     if (error) {
       console.error(
