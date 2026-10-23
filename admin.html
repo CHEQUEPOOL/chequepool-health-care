@@ -1065,48 +1065,142 @@ if(medicine){
 
 /* UPDATE ORDER STATUS */
 
-async function updateOrderStatus(orderId, newStatus){
+async function updateOrderStatus(orderId, newStatus) {
 
-  const { error } =
-    await supabaseClient
-      .from("orders")
-      .update({
-        status: newStatus,
-        order_status: newStatus
-      })
-      .eq("id", orderId);
+  // Admin session check
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
 
+  if (
+    authError ||
+    !authData.user ||
+    authData.user.email !== "chequepool@gmail.com"
+  ) {
+    alert("Authorized admin login required. Please login again.");
+    return;
+  }
 
-  if(error){
+  // Approve karne se pehle prescription aur medicines check karein
+  if (newStatus === "APPROVED") {
 
+    // Order se linked prescription ID aur items fetch karein
+    const { data: order, error: orderError } =
+      await supabaseClient
+        .from("orders")
+        .select("id, prescription_id")
+        .eq("id", orderId)
+        .maybeSingle();
+
+    if (orderError || !order) {
+      alert(
+        "Order details nahi mil paayi.\n\n" +
+        (orderError?.message || "Order not found")
+      );
+      return;
+    }
+
+    const { data: items, error: itemsError } =
+      await supabaseClient
+        .from("order_items")
+        .select("medicine_id")
+        .eq("order_id", orderId);
+
+    if (itemsError) {
+      alert("Order items check nahi ho paaye:\n\n" + itemsError.message);
+      return;
+    }
+
+    const medicineIds = [
+      ...new Set((items || []).map(item => item.medicine_id))
+    ];
+
+    if (medicineIds.length === 0) {
+      alert("Is order mein medicines nahi mili. Order approve nahi hua.");
+      return;
+    }
+
+    const { data: medicines, error: medicinesError } =
+      await supabaseClient
+        .from("medicines")
+        .select("id, name, require_prescription, requires_prescription")
+        .in("id", medicineIds);
+
+    if (medicinesError) {
+      alert(
+        "Medicine prescription requirement check nahi ho paayi:\n\n" +
+        medicinesError.message
+      );
+      return;
+    }
+
+    const needsPrescription = (medicines || []).some(medicine =>
+      medicine.require_prescription === true ||
+      medicine.requires_prescription === true
+    );
+
+    if (needsPrescription && !order.prescription_id) {
+      alert(
+        "❌ Is order mein prescription-required medicine hai, " +
+        "lekin prescription linked nahi hai. Order approve nahi hua."
+      );
+      return;
+    }
+
+    if (order.prescription_id) {
+      const { data: prescription, error: prescriptionError } =
+        await supabaseClient
+          .from("prescriptions")
+          .select("id, status")
+          .eq("id", order.prescription_id)
+          .maybeSingle();
+
+      if (prescriptionError || !prescription) {
+        alert(
+          "Prescription status check nahi ho paaya. Order approve nahi hua.\n\n" +
+          (prescriptionError?.message || "Prescription not found")
+        );
+        return;
+      }
+
+      if (prescription.status !== "APPROVED") {
+        alert(
+          "❌ Order approve nahi ho sakta.\n\n" +
+          "Prescription status: " + prescription.status +
+          "\nPehle prescription ko approve karna zaroori hai."
+        );
+        return;
+      }
+    }
+  }
+
+  // Order status update
+  const { error } = await supabaseClient
+    .from("orders")
+    .update({
+      status: newStatus,
+      order_status: newStatus
+    })
+    .eq("id", orderId);
+
+  if (error) {
     console.error(error);
-
     alert(
       "Order status update nahi hua.\n\n" +
       error.message
     );
-
     return;
   }
 
+  alert("Order status successfully updated to " + newStatus);
 
-  alert(
-    "Order status successfully updated to " +
-    newStatus
-  );
+  const box = document.getElementById("orderDetailsBox");
 
-
-  const box =
-    document.getElementById("orderDetailsBox");
-
-  if(box){
+  if (box) {
     box.remove();
   }
 
-
   loadOrders();
-
-}
+    }
 
 
 /* UPDATE PAYMENT STATUS */
