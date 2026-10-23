@@ -487,14 +487,22 @@ async function loadPrescriptions(){
 
     if(p.private_file_key){
 
-      const { data: signedData } =
-        await supabaseClient
-          .storage
-          .from("prescriptions")
-          .createSignedUrl(
-            p.private_file_key,
-            3600
-          );
+      const { data: signedData, error: signedError } =
+  await supabaseClient
+    .storage
+    .from("prescriptions")
+    .createSignedUrl(
+      p.private_file_key,
+      3600
+    );
+
+if (signedError) {
+  console.error(
+    "Prescription signed URL error:",
+    p.id,
+    signedError
+  );
+}
 
 
       if(
