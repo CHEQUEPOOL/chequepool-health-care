@@ -558,13 +558,29 @@ if (signedError) {
           ${p.created_at || "-"}
         </td>
 
-        <td>
+          <td>
+
+          <button
+            style="background:#16a34a;color:white;padding:8px;border:0;border-radius:5px;margin:3px;"
+            onclick="updatePrescriptionStatus('${p.id}', 'APPROVED')">
+
+            ✅ Approve
+
+          </button>
+
+          <button
+            style="background:#dc2626;color:white;padding:8px;border:0;border-radius:5px;margin:3px;"
+            onclick="updatePrescriptionStatus('${p.id}', 'REJECTED')">
+
+            ❌ Reject
+
+          </button>
 
           <button
             class="delete"
             onclick="deletePrescription('${p.id}')">
 
-            Delete
+            🗑️ Delete
 
           </button>
 
@@ -586,7 +602,50 @@ if (signedError) {
     html;
 
 }
+/* APPROVE / REJECT PRESCRIPTION */
 
+async function updatePrescriptionStatus(id, newStatus) {
+
+  const action = newStatus === "APPROVED"
+    ? "Approve"
+    : "Reject";
+
+  if (!confirm(action + " this prescription?")) {
+    return;
+  }
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !authData.user) {
+    alert("Admin login session nahi mila. Please login again.");
+    return;
+  }
+
+  if (authData.user.email !== "chequepool@gmail.com") {
+    alert("Only authorized admin can review prescriptions.");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("prescriptions")
+    .update({
+      status: newStatus,
+      reviewed_by: authData.user.id,
+      reviewed_at: new Date().toISOString()
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error(error);
+    alert("Status update failed:\n\n" + error.message);
+    return;
+  }
+
+  alert("Prescription status updated: " + newStatus);
+
+  await loadPrescriptions();
+  }
 
 /* DELETE */
 
