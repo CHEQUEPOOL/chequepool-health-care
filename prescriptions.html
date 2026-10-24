@@ -647,50 +647,86 @@ async function updatePrescriptionStatus(id, newStatus) {
   await loadPrescriptions();
   }
 
-/* DELETE */
+/* SECURE DELETE PRESCRIPTION */
 
-async function deletePrescription(id){
+async function deletePrescription(id) {
 
-  const confirmDelete =
-    confirm(
-      "Delete this prescription?"
-    );
+  // 1. Check logged-in user
+  const {
+    data: { user },
+    error: authError
+  } = await supabaseClient.auth.getUser();
 
-
-  if(!confirmDelete){
-
+  if (authError || !user) {
+    alert("Please login as Admin first.");
+    window.location.href = "admin-login.html";
     return;
-
   }
 
-
-  const { error } =
-    await supabaseClient
-      .from("prescriptions")
-      .delete()
-      .eq("id", id);
-
-
-  if(error){
-
-    alert(
-      "Delete failed:\n\n" +
-      error.message
-    );
-
+  // 2. Check Admin email
+  if (
+    user.email?.toLowerCase() !==
+    "chequepool@gmail.com"
+  ) {
+    alert("Access denied. Only Admin can delete prescriptions.");
     return;
-
   }
 
-
-  alert(
-    "Prescription deleted successfully."
+  // 3. Confirm deletion
+  const confirmDelete = confirm(
+    "क्या आप इस prescription को हमेशा के लिए Delete करना चाहते हैं?"
   );
 
+  if (!confirmDelete) {
+    return;
+  }
 
-  loadPrescriptions();
+  // 4. Fetch Storage file path
+  const {
+    data: prescription,
+    error: fetchError
+  } = await supabaseClient
+    .from("prescriptions")
+    .select("id, private_file_key")
+    .eq("id", id)
+    .maybeSingle();
 
-}
+  if (fetchError) {
+    alert(
+      "Prescription details load नहीं हुईं:\n\n" +
+      fetchError.message
+    );
+    return;
+  }
+
+  if (!prescription) {
+    alert("Prescription record नहीं मिला.");
+    await loadPrescriptions();
+    return;
+  }
+
+  // 5. Delete database record
+  const { error: deleteError } = await supabaseClient
+    .from("prescriptions")
+    .delete()
+    .eq("id", id);
+
+  if (deleteError) {
+    alert(
+      "Delete failed:\n\n" +
+      deleteError.message
+    );
+    return;
+  }
+
+  // 6. Database record deleted successfully
+  alert(
+    "Prescription record deleted successfully."
+  );
+
+  await loadPrescriptions();
+
+    }
 
 
 /* START */
