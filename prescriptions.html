@@ -651,82 +651,136 @@ async function updatePrescriptionStatus(id, newStatus) {
 
 async function deletePrescription(id) {
 
-  // 1. Check logged-in user
-  const {
-    data: { user },
-    error: authError
-  } = await supabaseClient.auth.getUser();
+  try {
 
-  if (authError || !user) {
-    alert("Please login as Admin first.");
-    window.location.href = "admin-login.html";
-    return;
-  }
+    // 1. Verify logged-in user
+    const {
+      data: { user },
+      error: authError
+    } = await supabaseClient.auth.getUser();
 
-  // 2. Check Admin email
-  if (
-    user.email?.toLowerCase() !==
-    "chequepool@gmail.com"
-  ) {
-    alert("Access denied. Only Admin can delete prescriptions.");
-    return;
-  }
-
-  // 3. Confirm deletion
-  const confirmDelete = confirm(
-    "क्या आप इस prescription को हमेशा के लिए Delete करना चाहते हैं?"
-  );
-
-  if (!confirmDelete) {
-    return;
-  }
-
-  // 4. Fetch Storage file path
-  const {
-    data: prescription,
-    error: fetchError
-  } = await supabaseClient
-    .from("prescriptions")
-    .select("id, private_file_key")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (fetchError) {
-    alert(
-      "Prescription details load नहीं हुईं:\n\n" +
-      fetchError.message
-    );
-    return;
-  }
-
-  if (!prescription) {
-    alert("Prescription record नहीं मिला.");
-    await loadPrescriptions();
-    return;
-  }
-
-  // 5. Delete database record
-  const { error: deleteError } = await supabaseClient
-    .from("prescriptions")
-    .delete()
-    .eq("id", id);
-
-  if (deleteError) {
-    alert(
-      "Delete failed:\n\n" +
-      deleteError.message
-    );
-    return;
-  }
-
-  // 6. Database record deleted successfully
-  alert(
-    "Prescription record deleted successfully."
-  );
-
-  await loadPrescriptions();
-
+    if (authError || !user) {
+      alert("Please login as Admin first.");
+      window.location.href = "admin-login.html";
+      return;
     }
+
+    // 2. Verify Admin email
+    if (
+      user.email?.toLowerCase() !==
+      "chequepool@gmail.com"
+    ) {
+      alert(
+        "Access denied. Only Admin can delete prescriptions."
+      );
+      return;
+    }
+
+    // 3. Confirm deletion
+    const confirmDelete = confirm(
+      "क्या आप इस prescription को हमेशा के लिए Delete करना चाहते हैं?"
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    // 4. Fetch prescription details
+    const {
+      data: prescription,
+      error: fetchError
+    } = await supabaseClient
+      .from("prescriptions")
+      .select("id, private_file_key")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchError) {
+      alert(
+        "Prescription details load नहीं हुईं:\n\n" +
+        fetchError.message
+      );
+      return;
+    }
+
+    if (!prescription) {
+      alert("Prescription record नहीं मिला.");
+      await loadPrescriptions();
+      return;
+    }
+
+    // 5. Delete Storage file, if a path exists
+    const filePath = prescription.private_file_key;
+
+    if (filePath) {
+
+      const {
+        error: storageError
+      } = await supabaseClient
+        .storage
+        .from("prescriptions")
+        .remove([filePath]);
+
+      if (storageError) {
+        console.error(
+          "Prescription Storage delete error:",
+          storageError
+        );
+
+        alert(
+          "Storage file delete नहीं हुई:\n\n" +
+          storageError.message +
+          "\n\nDatabase record सुरक्षित रखा गया है।"
+        );
+
+        return;
+      }
+    }
+
+    // 6. Delete database record
+    const {
+      error: deleteError
+    } = await supabaseClient
+      .from("prescriptions")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+
+      console.error(
+        "Prescription database delete error:",
+        deleteError
+      );
+
+      alert(
+        "Storage file delete हो गई, लेकिन database record delete नहीं हुआ:\n\n" +
+        deleteError.message +
+        "\n\nAdmin से database record की जाँच करवाएँ।"
+      );
+
+      return;
+    }
+
+    // 7. Refresh prescription list
+    alert(
+      "Prescription file और database record delete हो गए।"
+    );
+
+    await loadPrescriptions();
+
+  } catch (error) {
+
+    console.error(
+      "Unexpected prescription delete error:",
+      error
+    );
+
+    alert(
+      "Unexpected error:\n\n" +
+      (error.message || error)
+    );
+  }
+      }
 
 
 /* START */
