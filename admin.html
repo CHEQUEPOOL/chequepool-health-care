@@ -1065,7 +1065,7 @@ if(medicine){
 
 /* UPDATE ORDER STATUS */
 
-async function updateOrderStatus(orderId, newStatus) {
+    async function updateOrderStatus(orderId, newStatus) {
 
   // Admin session check
   const { data: authData, error: authError } =
@@ -1080,14 +1080,13 @@ async function updateOrderStatus(orderId, newStatus) {
     return;
   }
 
-  // Approve karne se pehle prescription aur medicines check karein
+  // Approval se pehle prescription aur medicines check karein
   if (newStatus === "APPROVED") {
 
-    // Order se linked prescription ID aur items fetch karein
     const { data: order, error: orderError } =
       await supabaseClient
         .from("orders")
-        .select("id, prescription_id")
+        .select("id, prescription_id, status, order_status, stock_deducted")
         .eq("id", orderId)
         .maybeSingle();
 
@@ -1099,6 +1098,18 @@ async function updateOrderStatus(orderId, newStatus) {
       return;
     }
 
+    // Already-approved order ko dobara process na karein
+    if (
+      String(order.status || "").toUpperCase() === "APPROVED" &&
+      String(order.order_status || "").toUpperCase() === "APPROVED"
+    ) {
+      alert(
+        "Yeh order pehle se APPROVED hai.\n\n" +
+        "Purane order ka stock dobara deduct nahi kiya jayega."
+      );
+      return;
+    }
+
     const { data: items, error: itemsError } =
       await supabaseClient
         .from("order_items")
@@ -1106,7 +1117,10 @@ async function updateOrderStatus(orderId, newStatus) {
         .eq("order_id", orderId);
 
     if (itemsError) {
-      alert("Order items check nahi ho paaye:\n\n" + itemsError.message);
+      alert(
+        "Order items check nahi ho paaye:\n\n" +
+        itemsError.message
+      );
       return;
     }
 
@@ -1147,6 +1161,7 @@ async function updateOrderStatus(orderId, newStatus) {
     }
 
     if (order.prescription_id) {
+
       const { data: prescription, error: prescriptionError } =
         await supabaseClient
           .from("prescriptions")
@@ -1162,7 +1177,9 @@ async function updateOrderStatus(orderId, newStatus) {
         return;
       }
 
-      if (prescription.status !== "APPROVED") {
+      if (
+        String(prescription.status || "").toUpperCase() !== "APPROVED"
+      ) {
         alert(
           "❌ Order approve nahi ho sakta.\n\n" +
           "Prescription status: " + prescription.status +
@@ -1171,36 +1188,80 @@ async function updateOrderStatus(orderId, newStatus) {
         return;
       }
     }
+
+    // IMPORTANT:
+    // Approval aur stock deduction database function karega.
+    const { data: approvalResult, error: approvalError } =
+      await supabaseClient.rpc(
+        "approve_order_with_stock",
+        {
+          p_order_id: orderId
+        }
+      );
+
+    if (approvalError) {
+      console.error("Order approval error:", approvalError);
+
+      alert(
+        "❌ Order approve nahi hua.\n\n" +
+        approvalError.message
+      );
+
+      return;
+    }
+
+    if (approvalResult === "ALREADY_APPROVED") {
+      alert(
+        "Yeh order pehle se APPROVED hai.\n" +
+        "Stock dobara deduct nahi hua."
+      );
+    } else if (approvalResult === "APPROVED_STOCK_DEDUCTED") {
+      alert(
+        "✅ Order APPROVED ho gaya!\n\n" +
+        "Medicine stock successfully deduct ho gaya."
+      );
+    } else {
+      alert(
+        "Unexpected response mila:\n" +
+        String(approvalResult)
+      );
+      return;
+    }
+
+  } else {
+
+    // Reject ya doosre status ke liye existing update
+    const { error } = await supabaseClient
+      .from("orders")
+      .update({
+        status: newStatus,
+        order_status: newStatus
+      })
+      .eq("id", orderId);
+
+    if (error) {
+      console.error(error);
+
+      alert(
+        "Order status update nahi hua.\n\n" +
+        error.message
+      );
+
+      return;
+    }
+
+    alert("Order status successfully updated to " + newStatus);
   }
 
-  // Order status update
-  const { error } = await supabaseClient
-    .from("orders")
-    .update({
-      status: newStatus,
-      order_status: newStatus
-    })
-    .eq("id", orderId);
-
-  if (error) {
-    console.error(error);
-    alert(
-      "Order status update nahi hua.\n\n" +
-      error.message
-    );
-    return;
-  }
-
-  alert("Order status successfully updated to " + newStatus);
-
+  // Details box close karein aur orders refresh karein
   const box = document.getElementById("orderDetailsBox");
 
   if (box) {
     box.remove();
   }
 
-  loadOrders();
-    }
+  await loadOrders();
+                  }
 
 
 /* UPDATE PAYMENT STATUS */
